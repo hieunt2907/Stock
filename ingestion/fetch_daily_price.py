@@ -21,14 +21,14 @@ def fetch_daily_incremental():
                 for row in records:
                     row['ticker'] = ticker
                     row['type'] = 'daily_price'
-                    produce_message(key=ticker, payload=row)
+                    produce_message(key=ticker, payload=row, topic='daily_price')
                     count += 1
                 
                 print(f" -> [{ticker}] Đã gửi {count} bản ghi lên Kafka.")
             else:
                 print(f" -> [{ticker}] Không có dữ liệu.")
             
-            if idx % 25 == 0:
+            if idx % 50 == 0:
                 print(f"[Rate Limit] Dừng 20s sau {idx} requests...")
                 time.sleep(20)
         except Exception as e:
@@ -37,4 +37,6 @@ def fetch_daily_incremental():
     flush_producer()
     print("Hoàn tất đẩy dữ liệu cấu trúc daily lên Kafka.")
 
-
+if __name__ == "__main__":
+    fetch_daily_incremental()
+    

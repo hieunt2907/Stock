@@ -20,14 +20,14 @@ def backfill_history():
                 for row in records:
                     row['ticker'] = ticker
                     row['type'] = 'daily_price_backfill'
-                    produce_message(key=ticker, payload=row)
+                    produce_message(key=ticker, payload=row, topic='daily_price_backfill')
                     count += 1
                 
                 print(f" -> [{ticker}] Đẩy thành công {count} bản ghi lên Kafka.")
             else:
                 print(f" -> [{ticker}] Không lấy được dữ liệu.")
             
-            if idx % 25 == 0:
+            if idx % 50 == 0:
                 print(f"[Rate Limit] Dừng 20s sau {idx} requests...")
                 time.sleep(20)
         except Exception as e:
@@ -35,5 +35,9 @@ def backfill_history():
 
     flush_producer()
     print("Hoàn thành backfill VN30 vào Kafka.")
+
+if __name__ == "__main__":
+    backfill_history()
+    
 
 

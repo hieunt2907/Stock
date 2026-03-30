@@ -17,12 +17,12 @@ def fetch_intraday():
                 for row in records:
                     row['ticker'] = ticker
                     row['type'] = 'intraday_price'
-                    produce_message(key=ticker, payload=row)
+                    produce_message(key=ticker, payload=row, topic='intraday_price')
                     count += 1
                 
                 print(f" -> [{ticker}] Gửi thành công {count} dòng intraday lên Kafka.")
             
-            if idx % 25 == 0:
+            if idx % 50 == 0:
                 print(f"[Rate Limit] Dừng 20s sau {idx} requests...")
                 time.sleep(20)
             else:

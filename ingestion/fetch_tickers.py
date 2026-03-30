@@ -12,9 +12,10 @@ def fetch_vn_tickers_to_kafka():
                 'group': 'VN30',
                 'type': 'ticker_list',
             }
-            produce_message(key=symbol, payload=payload)
+            # Gửi message lên Kafka topic ticker_list
+            produce_message(key=symbol, payload=payload, topic='ticker_list')
             
-            if idx % 25 == 0:
+            if idx % 50 == 0:
                 print(f"[Rate Limit] Dừng 20s sau {idx} requests...")
                 time.sleep(20)
             else:
@@ -25,5 +26,8 @@ def fetch_vn_tickers_to_kafka():
         return vn30_symbols
     except Exception as e:
         print(f"Lỗi khi lấy dữ liệu tickers: {e}")
+
+if __name__ == "__main__":
+    fetch_vn_tickers_to_kafka()
 
 

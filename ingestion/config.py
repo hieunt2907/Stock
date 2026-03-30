@@ -41,14 +41,18 @@ def get_vn30_tickers():
     """Hàm tiện ích lấy danh sách mã VN30"""
     return list(Listing(source='KBS').symbols_by_group('VN30'))
 
-def produce_message(key, payload):
+def produce_message(key, payload, topic=None):
     """Chuyển đổi Dict thành chuỗi JSON bytes và đẩy lên hệ thống Kafka"""
     if not kafka_producer:
         return
+    
+    # Use the provided topic or fall back to the default KAFKA_TOPIC
+    target_topic = topic if topic else KAFKA_TOPIC
+    
     message = json.dumps(payload, default=str).encode('utf-8')
     key_bytes = key.encode('utf-8') if key else None
     
-    kafka_producer.produce(KAFKA_TOPIC, key=key_bytes, value=message, callback=delivery_report)
+    kafka_producer.produce(target_topic, key=key_bytes, value=message, callback=delivery_report)
     kafka_producer.poll(0)
 
 def flush_producer():

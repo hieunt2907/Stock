@@ -19,10 +19,10 @@ def fetch_benchmark_index():
             for idx, row in enumerate(records, 1):
                 row['ticker'] = 'VN30_INDEX'
                 row['type'] = 'benchmark_index'
-                produce_message(key='VN30_INDEX', payload=row)
+                produce_message(key='VN30_INDEX', payload=row, topic='benchmark_index')
                 count += 1
                 
-                if idx % 25 == 0:
+                if idx % 50 == 0:
                     print(f"[Rate Limit] Dừng 20s sau {idx} requests...")
                     time.sleep(20)
                 else:
@@ -34,5 +34,9 @@ def fetch_benchmark_index():
             print("Không có dữ liệu trả về cho VN30.")
     except Exception as e:
         print(f"Lỗi khi lấy chỉ số VN30: {e}")
+
+if __name__ == "__main__":
+    fetch_benchmark_index()
+
 
 

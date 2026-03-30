@@ -16,10 +16,10 @@ def fetch_metadata():
                 for row in records:
                     row['ticker'] = ticker
                     row['type'] = 'company_metadata'
-                    produce_message(key=ticker, payload=row)
+                    produce_message(key=ticker, payload=row, topic='company_metadata')
                 
             print(f" -> Lấy overview cho {ticker} thành công.")
-            if idx % 25 == 0:
+            if idx % 50 == 0:
                 print(f"[Rate Limit] Dừng 20s sau {idx} requests...")
                 time.sleep(20)
             else:
@@ -29,5 +29,8 @@ def fetch_metadata():
             
     flush_producer()
     print("Hoàn tất gửi metadata lên Kafka.")
+
+if __name__ == "__main__":
+    fetch_metadata()
 
 

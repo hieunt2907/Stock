@@ -37,7 +37,9 @@ CREATE TABLE IF NOT EXISTS stock.company_metadata (
     outstanding_shares BIGINT,
     as_of_date TIMESTAMP,
     ticker VARCHAR(20),
-    PRIMARY KEY (ticker)
+    created_at TIMESTAMP,
+    version BIGINT,
+    PRIMARY KEY (ticker, version)
 );
 
 -- Table: benchmark_index
@@ -49,7 +51,9 @@ CREATE TABLE IF NOT EXISTS stock.benchmark_index (
     close NUMERIC,
     volume BIGINT,
     ticker VARCHAR(20),
-    PRIMARY KEY (ticker, time)
+    created_at TIMESTAMP,
+    version BIGINT,
+    PRIMARY KEY (ticker, time, version)
 );
 
 -- Table: daily_price_backfill
@@ -61,7 +65,9 @@ CREATE TABLE IF NOT EXISTS stock.daily_price_backfill (
     close NUMERIC,
     volume BIGINT,
     ticker VARCHAR(20),
-    PRIMARY KEY (ticker, time)
+    created_at TIMESTAMP,
+    version BIGINT,
+    PRIMARY KEY (ticker, time, version)
 );
 
 -- Table: daily_price
@@ -73,5 +79,7 @@ CREATE TABLE IF NOT EXISTS stock.daily_price (
     close NUMERIC,
     volume BIGINT,
     ticker VARCHAR(20),
-    PRIMARY KEY (ticker, time)
+    created_at TIMESTAMP,
+    version BIGINT,
+    PRIMARY KEY (ticker, time, version)
 );

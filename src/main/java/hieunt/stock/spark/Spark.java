@@ -9,7 +9,7 @@ public class Spark {
     public static SparkSession getSparkSession() {
         SparkConf conf = new SparkConf()
                 .setAppName(SparkConfig.APP_NAME)
-                .setMaster(SparkConfig.MASTER)
+                .setMaster("local[*]")
                 
                 // CPU / Resource Config
                 .set("spark.executor.memory", SparkConfig.EXECUTOR_MEMORY)
@@ -19,8 +19,8 @@ public class Spark {
                 .set("spark.driver.cores", SparkConfig.DRIVER_CORES)
                 
                 // Docker / Network Config
-                .set("spark.driver.host", "host.docker.internal")
-                .set("spark.driver.bindAddress", "0.0.0.0")
+                // .set("spark.driver.host", "host.docker.internal")
+                // .set("spark.driver.bindAddress", "0.0.0.0")
                 
                 // Memory Config
                 .set("spark.sql.shuffle.partitions", SparkConfig.SQL_SHUFFLE_PARTITIONS)

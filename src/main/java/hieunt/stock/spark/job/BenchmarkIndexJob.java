@@ -4,9 +4,10 @@ import hieunt.stock.spark.processor.BenchmarkIndexProcessor;
 
 public class BenchmarkIndexJob {
     public static void main(String[] args) {
-        System.out.println("Starting Spark Job: MinIO to Postgres (Benchmark Index)...");
+        String partitionPath = (args != null && args.length > 0) ? args[0] : null;
+        System.out.println("Starting Spark Job: MinIO to Postgres (Benchmark Index) | Partition: " + partitionPath);
         try {
-            BenchmarkIndexProcessor processor = new BenchmarkIndexProcessor();
+            BenchmarkIndexProcessor processor = new BenchmarkIndexProcessor(partitionPath);
             processor.process();
             System.out.println("Job Finished Successfully!");
         } catch (Exception e) {

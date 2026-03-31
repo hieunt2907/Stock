@@ -4,9 +4,10 @@ import hieunt.stock.spark.processor.CompanyMetadataProcessor;
 
 public class CompanyMetadataJob {
     public static void main(String[] args) {
-        System.out.println("Starting Spark Job: MinIO to Postgres (Company Metadata)...");
+        String partitionPath = (args != null && args.length > 0) ? args[0] : null;
+        System.out.println("Starting Spark Job: MinIO to Postgres (Company Metadata) | Partition: " + partitionPath);
         try {
-            CompanyMetadataProcessor processor = new CompanyMetadataProcessor();
+            CompanyMetadataProcessor processor = new CompanyMetadataProcessor(partitionPath);
             processor.process();
             System.out.println("Job Finished Successfully!");
         } catch (Exception e) {

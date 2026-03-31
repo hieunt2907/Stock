@@ -43,3 +43,5 @@ __pycache__
 .idea/
 .mvn/
 .vscode/
+
+logs/

@@ -6,8 +6,8 @@ import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
 
 public class DailyPriceBackfillProcessor extends AbstractMinioToPostgresProcessor {
-    public DailyPriceBackfillProcessor() {
-        super("daily_price_backfill", "stock.daily_price_backfill", "daily_price_backfill");
+    public DailyPriceBackfillProcessor(String partitionPath) {
+        super("daily_price_backfill", "stock.daily_price_backfill", "daily_price_backfill", partitionPath);
     }
 
     @Override

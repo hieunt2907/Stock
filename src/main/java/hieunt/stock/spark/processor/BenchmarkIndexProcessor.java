@@ -6,8 +6,8 @@ import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
 
 public class BenchmarkIndexProcessor extends AbstractMinioToPostgresProcessor {
-    public BenchmarkIndexProcessor() {
-        super("benchmark_index", "stock.benchmark_index", "benchmark_index");
+    public BenchmarkIndexProcessor(String partitionPath) {
+        super("benchmark_index", "stock.benchmark_index", "benchmark_index", partitionPath);
     }
 
     @Override

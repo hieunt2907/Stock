@@ -6,8 +6,13 @@ import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
 
 public class CompanyMetadataProcessor extends AbstractMinioToPostgresProcessor {
-    public CompanyMetadataProcessor() {
-        super("company_metadata", "stock.company_metadata", "company_metadata");
+    public CompanyMetadataProcessor(String partitionPath) {
+        super("company_metadata", "stock.company_metadata", "company_metadata", partitionPath);
+    }
+
+    @Override
+    protected String[] getBusinessKeys() {
+        return new String[]{"ticker"}; // company_metadata không có cột time
     }
 
     @Override

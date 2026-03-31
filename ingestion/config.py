@@ -9,8 +9,12 @@ from vnstock import Listing
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Lấy các biến môi trường một cách an toàn
-load_dotenv()
+# Load .env từ thư mục cha (root project) — hoạt động cả khi chạy local lẫn trong Docker
+# Docker: /app/ingestion/config.py -> tìm /app/.env (được mount từ host)
+# Local:  e:/Data Engineer/Stock/ingestion/config.py -> tìm e:/Data Engineer/Stock/.env
+import os
+_base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(_base_dir, '.env'))
 
 # Khởi tạo API Key từ môi trường (không ghi thông tin nhạy cảm vào code)
 vnstock_api_key = os.getenv('VNSTOCK_API_KEY')

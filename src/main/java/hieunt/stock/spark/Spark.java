@@ -9,7 +9,7 @@ public class Spark {
     public static SparkSession getSparkSession() {
         SparkConf conf = new SparkConf()
                 .setAppName(SparkConfig.APP_NAME)
-                .setMaster("local[*]")
+                .setMaster(SparkConfig.MASTER)
                 
                 // CPU / Resource Config
                 .set("spark.executor.memory", SparkConfig.EXECUTOR_MEMORY)

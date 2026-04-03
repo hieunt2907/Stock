@@ -21,7 +21,10 @@ public class Spark {
                 // Docker / Network Config
                 // .set("spark.driver.host", "host.docker.internal")
                 // .set("spark.driver.bindAddress", "0.0.0.0")
-                
+                // Delta Lake Config
+                .set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+                .set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+
                 // Memory Config
                 .set("spark.sql.shuffle.partitions", SparkConfig.SQL_SHUFFLE_PARTITIONS)
                 .set("spark.memory.fraction", SparkConfig.MEMORY_FRACTION)

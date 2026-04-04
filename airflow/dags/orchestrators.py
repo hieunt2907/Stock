@@ -120,10 +120,14 @@ def SparkDockerExecOrchestrator(
 
     cmd = [
         f"{SPARK_HOME}/bin/spark-submit",
-        "--master",      "spark://spark-master:7077",
-        "--deploy-mode", "client",
-        "--name",        app_name,
-        "--class",       spark_class,
+        "--master",              "spark://spark-master:7077",
+        "--deploy-mode",         "client",
+        "--executor-memory",     "1g",
+        "--driver-memory",       "1g",
+        "--executor-cores",      "1",
+        "--total-executor-cores", "1",
+        "--name",                app_name,
+        "--class",               spark_class,
         JAR_PATH_IN_SPARK,
     ]
     if partition_path:

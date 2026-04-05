@@ -23,7 +23,7 @@ ORDER BY (ticker);
 -- dim_company: thông tin công ty (SCD Type 2 — giữ version)
 CREATE TABLE IF NOT EXISTS stock.dim_company (
     ticker              String,
-    version             Int64,           -- audit version từ Postgres
+    pg_version          Int64,           -- audit version từ Postgres
     symbol              String,
     business_model      String,
     founded_date        String,
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS stock.dim_company (
     created_at          DateTime,
     loaded_at           DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(loaded_at)
-ORDER BY (ticker, version);
+ORDER BY (ticker, pg_version);
 
 -- dim_date: bảng thời gian (calendar table)
 CREATE TABLE IF NOT EXISTS stock.dim_date (
@@ -109,21 +109,38 @@ CREATE TABLE IF NOT EXISTS stock.fact_benchmark_index (
 PARTITION BY toYYYYMM(time)
 ORDER BY (ticker, time);
 
--- ============================================================
---  ANALYTICAL / DERIVED TABLES
--- ============================================================
+-- -- ============================================================
+-- --  ANALYTICAL / DERIVED TABLES
+-- -- ============================================================
 
--- technical_indicators: RSI, SMA tính từ fact_daily_price
-CREATE TABLE IF NOT EXISTS stock.technical_indicators (
-    ticker        String,
-    time          DateTime,
-    date_id       Date,
-    close         Decimal(20, 2),
-    rsi_14        Float64,
-    sma_20        Float64,
-    sma_50        Float64,
-    sma_200       Float64,
-    calculated_at DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(calculated_at)
-PARTITION BY toYYYYMM(time)
-ORDER BY (ticker, time);
+-- -- technical_indicators_historical: chỉ số dài hạn tính từ daily_price_backfill
+-- --   RSI(14) — đánh giá xu hướng trung/dài hạn
+-- --   SMA(200) — đường trung bình 200 ngày (benchmark trend)
+-- --   Chạy 1 lần (backfill), rerun khi đổi công thức
+-- CREATE TABLE IF NOT EXISTS stock.technical_indicators_historical (
+--     ticker        String,
+--     time          DateTime,
+--     date_id       Date,
+--     close         Decimal(20, 2),
+--     rsi_14        Float64,
+--     sma_200       Float64,
+--     calculated_at DateTime DEFAULT now()
+-- ) ENGINE = ReplacingMergeTree(calculated_at)
+-- PARTITION BY toYYYYMM(time)
+-- ORDER BY (ticker, time);
+
+-- -- technical_indicators_daily: chỉ số ngắn hạn tính từ daily_price (incremental hàng ngày)
+-- --   RSI(3)  — phát hiện overbought/oversold ngắn hạn
+-- --   SMA(10) — đường trung bình 10 ngày (momentum ngắn hạn)
+-- --   Append mỗi ngày sau khi daily_price được nạp vào Postgres
+-- CREATE TABLE IF NOT EXISTS stock.technical_indicators_daily (
+--     ticker        String,
+--     time          DateTime,
+--     date_id       Date,
+--     close         Decimal(20, 2),
+--     rsi_3         Float64,
+--     sma_10        Float64,
+--     calculated_at DateTime DEFAULT now()
+-- ) ENGINE = ReplacingMergeTree(calculated_at)
+-- PARTITION BY toYYYYMM(time)
+-- ORDER BY (ticker, time);

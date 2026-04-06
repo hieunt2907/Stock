@@ -1,3 +1,4 @@
 vnstock
 confluent-kafka
 python-dotenv
+minio

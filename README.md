@@ -145,7 +145,6 @@ Hỗ trợ so sánh chéo nhiều mã cùng ngành; dữ liệu trả về dạn
 ## V. Công nghệ sử dụng
 
 - **Ngôn ngữ**: Python, Java
-- **Cơ sở dữ liệu quan hệ**: PostgreSQL
 - **Distributed Streaming**: Apache Kafka
 - **Distributed Processing**: Apache Spark
 - **Data Lake**: MinIO

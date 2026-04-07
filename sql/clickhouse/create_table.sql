@@ -12,18 +12,14 @@ CREATE DATABASE IF NOT EXISTS stock;
 -- dim_ticker: thông tin cơ bản mỗi mã cổ phiếu
 CREATE TABLE IF NOT EXISTS stock.dim_ticker (
     ticker              String,
-    ticker_group        String,          -- "group" từ ticker_list
-    exchange            String,
-    company_type        String,
+    group        String,          -- "group" từ ticker_list
     -- SCD Type 1 (latest snapshot)
-    loaded_at           DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(loaded_at)
+) ENGINE = ReplacingMergeTree()
 ORDER BY (ticker);
 
 -- dim_company: thông tin công ty (SCD Type 2 — giữ version)
 CREATE TABLE IF NOT EXISTS stock.dim_company (
-    ticker              String,
-    pg_version          Int64,           -- audit version từ Postgres
+    ticker              String,          -- audit version từ Postgres
     symbol              String,
     business_model      String,
     founded_date        String,
@@ -34,7 +30,7 @@ CREATE TABLE IF NOT EXISTS stock.dim_company (
     exchange            String,
     listing_price       Int64,
     listed_volume       Int64,
-    ceo_name            String,
+    ceo_name            String,,
     ceo_position        String,
     inspector_name      String,
     inspector_position  String,
@@ -54,10 +50,8 @@ CREATE TABLE IF NOT EXISTS stock.dim_company (
     free_float          Decimal(30, 2),
     outstanding_shares  Int64,
     as_of_date          DateTime,
-    created_at          DateTime,
-    loaded_at           DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(loaded_at)
-ORDER BY (ticker, pg_version);
+) ENGINE = ReplacingMergeTree()
+ORDER BY (ticker);
 
 -- dim_date: bảng thời gian (calendar table)
 CREATE TABLE IF NOT EXISTS stock.dim_date (
@@ -69,8 +63,7 @@ CREATE TABLE IF NOT EXISTS stock.dim_date (
     day_of_month Int8,
     day_of_week Int8,       -- 1 = Mon, 7 = Sun
     is_weekend  UInt8,
-    loaded_at   DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(loaded_at)
+) ENGINE = ReplacingMergeTree()
 ORDER BY (date_id);
 
 -- ============================================================
@@ -87,10 +80,8 @@ CREATE TABLE IF NOT EXISTS stock.fact_daily_price (
     low         Decimal(20, 2),
     close       Decimal(20, 2),
     volume      Int64,
-    pg_version  Int64,              -- version từ Postgres (dedup key)
-    loaded_at   DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(loaded_at)
-PARTITION BY toYYYYMM(time)
+) ENGINE = ReplacingMergeTree()
+PARTITION BY ticker
 ORDER BY (ticker, time);
 
 -- fact_benchmark_index: chỉ số thị trường (VN-Index, HNX, ...)
@@ -103,10 +94,8 @@ CREATE TABLE IF NOT EXISTS stock.fact_benchmark_index (
     low         Decimal(20, 2),
     close       Decimal(20, 2),
     volume      Int64,
-    pg_version  Int64,
-    loaded_at   DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(loaded_at)
-PARTITION BY toYYYYMM(time)
+) ENGINE = ReplacingMergeTree()
+PARTITION BY ticker
 ORDER BY (ticker, time);
 
 -- -- ============================================================

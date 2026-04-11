@@ -5,9 +5,9 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
 
-public class CompanyMetadataProcessor extends AbstractMinioToPostgresProcessor {
+public class CompanyMetadataProcessor extends AbstractMinioToClickhouseProcessor {
     public CompanyMetadataProcessor(String partitionPath) {
-        super("company_metadata", "stock.company_metadata", "company_metadata", partitionPath);
+        super("company_metadata", "stock.dim_company", "company_metadata", partitionPath);
     }
 
     @Override

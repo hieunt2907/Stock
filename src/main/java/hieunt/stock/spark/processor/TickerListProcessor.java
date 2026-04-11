@@ -3,9 +3,9 @@ package hieunt.stock.spark.processor;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-public class TickerListProcessor extends AbstractMinioToPostgresProcessor {
+public class TickerListProcessor extends AbstractMinioToClickhouseProcessor {
     public TickerListProcessor(String partitionPath) {
-        super("ticker_list", "stock.ticker_list", "ticker_list", partitionPath);
+        super("ticker_list", "stock.dim_ticker", "ticker_list", partitionPath);
     }
 
     @Override

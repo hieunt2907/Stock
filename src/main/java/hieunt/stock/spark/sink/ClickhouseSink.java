@@ -17,10 +17,11 @@ public class ClickhouseSink implements BaseSink {
         properties.setProperty("user", ClickhouseConfig.USER);
         properties.setProperty("password", ClickhouseConfig.PASSWORD);
         properties.setProperty("driver", "com.clickhouse.jdbc.ClickHouseDriver");
-        
-        // Add any additional ClickHouse specific JDBC properties if needed
-        properties.setProperty("batch_size", "100000");
+        properties.setProperty("batchsize", "100000");
         properties.setProperty("rewrite_batch_insert", "true");
+        properties.setProperty("socket_timeout", "300000");
+        properties.setProperty("connection_timeout", "300000");
+        properties.setProperty("compress", "0");
         properties.setProperty("isolationLevel", "NONE");
 
         df.write()
@@ -28,4 +29,3 @@ public class ClickhouseSink implements BaseSink {
                 .jdbc(ClickhouseConfig.getJdbcUrl(), tableName, properties);
     }
 }
-

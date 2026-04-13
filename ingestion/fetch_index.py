@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from vnstock import Quote
 from config import upload_dataframe_to_minio
+from schema_validator import validate_dataframe
 
 TOPIC = 'benchmark_index'
 
@@ -19,6 +20,13 @@ def fetch_benchmark_index():
         if not df_index.empty:
             df_index['ticker'] = 'VN30_INDEX'
             df_index['type']   = TOPIC
+
+            # --- Schema Validation ---
+            is_valid, report = validate_dataframe(df_index, topic=TOPIC, ticker='VN30_INDEX')
+            if not is_valid:
+                print(f"Bỏ qua upload do schema không hợp lệ: {report}")
+                return
+
             ok = upload_dataframe_to_minio(df_index, topic=TOPIC, partition_key='VN30_INDEX')
             if ok:
                 print(f"Gửi thành công chỉ số VN30: {len(df_index)} dòng lên MinIO.")

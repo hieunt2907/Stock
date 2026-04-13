@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from vnstock import Quote
 from config import get_vn30_tickers, upload_dataframe_to_minio
+from schema_validator import validate_dataframe
 
 TOPIC = 'daily_price'
 
@@ -21,6 +22,13 @@ def fetch_daily_incremental():
             if not df_hist.empty:
                 df_hist['ticker'] = ticker
                 df_hist['type']   = TOPIC
+
+                # --- Schema Validation ---
+                is_valid, report = validate_dataframe(df_hist, topic=TOPIC, ticker=ticker)
+                if not is_valid:
+                    print(f" -> [{ticker}] Bỏ qua upload do schema không hợp lệ: {report}")
+                    continue
+
                 ok = upload_dataframe_to_minio(df_hist, topic=TOPIC, partition_key=ticker)
                 if ok:
                     print(f" -> [{ticker}] Upload thành công {len(df_hist)} bản ghi lên MinIO.")

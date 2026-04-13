@@ -2,6 +2,7 @@ import time
 import pandas as pd
 from vnstock import Company
 from config import get_vn30_tickers, upload_dataframe_to_minio
+from schema_validator import validate_dataframe
 
 TOPIC = 'company_metadata'
 
@@ -17,6 +18,13 @@ def fetch_metadata():
             if not df_overview.empty:
                 df_overview['ticker'] = ticker
                 df_overview['type']   = TOPIC
+
+                # --- Schema Validation ---
+                is_valid, report = validate_dataframe(df_overview, topic=TOPIC, ticker=ticker)
+                if not is_valid:
+                    print(f" -> [{ticker}] Bỏ qua upload do schema không hợp lệ: {report}")
+                    continue
+
                 ok = upload_dataframe_to_minio(df_overview, topic=TOPIC, partition_key=ticker)
                 if ok:
                     print(f" -> [{ticker}] Upload overview thành công lên MinIO.")

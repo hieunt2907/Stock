@@ -42,7 +42,7 @@ public abstract class AbstractMinioToClickhouseProcessor implements BaseProcesso
      * Subclass override nếu cần. Mặc định là ["ticker", "time"].
      */
     protected String[] getBusinessKeys() {
-        return new String[]{"ticker", "time"};
+        return new String[] { "ticker", "time" };
     }
 
     @Override
@@ -70,9 +70,9 @@ public abstract class AbstractMinioToClickhouseProcessor implements BaseProcesso
                 Dataset<Row> transformedData = transform(normalizedData);
 
                 // Xử lý giá trị thiếu (null):
-                //   - Số nguyên / Decimal / Float / Double → 0 / 0.0
-                //   - String → " " (single space)
-                //   - Các kiểu khác (Timestamp, Date, ...) → giữ nguyên null
+                // - Số nguyên / Decimal / Float / Double → 0 / 0.0
+                // - String → " " (single space)
+                // - Các kiểu khác (Timestamp, Date, ...) → giữ nguyên null
                 Dataset<Row> filledData = fillMissingValues(transformedData);
 
                 // Loại bỏ duplicate theo business key
@@ -80,7 +80,7 @@ public abstract class AbstractMinioToClickhouseProcessor implements BaseProcesso
 
                 // Bỏ các cột kỹ thuật / tạm thời nếu tồn tại
                 Dataset<Row> finalData = dedupedData;
-                String[] technicalColumns = {"type", "kafka_ingested_at"};
+                String[] technicalColumns = { "type", "kafka_ingested_at" };
                 for (String colName : technicalColumns) {
                     if (Arrays.asList(finalData.columns()).contains(colName)) {
                         finalData = finalData.drop(colName);
@@ -103,10 +103,10 @@ public abstract class AbstractMinioToClickhouseProcessor implements BaseProcesso
 
     /**
      * Xử lý giá trị thiếu (null) theo kiểu dữ liệu:
-     *   - IntegerType / LongType / ShortType / ByteType → fill 0
-     *   - FloatType / DoubleType / DecimalType          → fill 0.0
-     *   - StringType                                    → fill " "
-     *   - Các kiểu khác (Timestamp, Date, Boolean, ...) → giữ nguyên
+     * - IntegerType / LongType / ShortType / ByteType → fill 0
+     * - FloatType / DoubleType / DecimalType → fill 0.0
+     * - StringType → fill " "
+     * - Các kiểu khác (Timestamp, Date, Boolean, ...) → giữ nguyên
      */
     protected Dataset<Row> fillMissingValues(Dataset<Row> df) {
         Dataset<Row> result = df;
@@ -130,8 +130,21 @@ public abstract class AbstractMinioToClickhouseProcessor implements BaseProcesso
             } else if (dataType.equals(DataTypes.StringType)) {
                 result = result.withColumn(colName,
                         functions.coalesce(functions.col(colName), functions.lit(" ")));
+
+            } else if (dataType.equals(DataTypes.DateType)) {
+                result = result.withColumn(colName,
+                        functions.coalesce(functions.col(colName),
+                                functions.lit("1970-01-01").cast(DataTypes.DateType)));
+
+            } else if (dataType.equals(DataTypes.TimestampType)) {
+                result = result.withColumn(colName,
+                        functions.coalesce(functions.col(colName),
+                                functions.lit("1970-01-01 00:00:00").cast(DataTypes.TimestampType)));
+
+            } else if (dataType.equals(DataTypes.BooleanType)) {
+                result = result.withColumn(colName,
+                        functions.coalesce(functions.col(colName), functions.lit(false).cast(DataTypes.BooleanType)));
             }
-            // Timestamp, Date, Boolean, ... → không fill, giữ nguyên null
         }
         return result;
     }

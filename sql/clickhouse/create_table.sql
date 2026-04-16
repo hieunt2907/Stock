@@ -98,25 +98,25 @@ CREATE TABLE IF NOT EXISTS stock.fact_benchmark_index (
 PARTITION BY ticker
 ORDER BY (ticker, time);
 
--- -- ============================================================
--- --  ANALYTICAL / DERIVED TABLES
--- -- ============================================================
+-- ============================================================
+--  ANALYTICAL / DERIVED TABLES
+-- ============================================================
 
--- -- technical_indicators_historical: chỉ số dài hạn tính từ daily_price_backfill
--- --   RSI(14) — đánh giá xu hướng trung/dài hạn
--- --   SMA(200) — đường trung bình 200 ngày (benchmark trend)
--- --   Chạy 1 lần (backfill), rerun khi đổi công thức
--- CREATE TABLE IF NOT EXISTS stock.technical_indicators_historical (
---     ticker        String,
---     time          DateTime,
---     date_id       Date,
---     close         Decimal(20, 2),
---     rsi_14        Float64,
---     sma_200       Float64,
---     calculated_at DateTime DEFAULT now()
--- ) ENGINE = ReplacingMergeTree(calculated_at)
--- PARTITION BY toYYYYMM(time)
--- ORDER BY (ticker, time);
+-- technical_indicators_historical: chỉ số dài hạn tính từ daily_price_backfill
+--   RSI(14) — đánh giá xu hướng trung/dài hạn
+--   SMA(200) — đường trung bình 200 ngày (benchmark trend)
+--   Chạy 1 lần (backfill), rerun khi đổi công thức
+CREATE TABLE IF NOT EXISTS stock.technical_indicators_historical (
+    ticker        String,
+    time          DateTime,
+    date_id       Date,
+    close         Decimal(20, 2),
+    rsi_14        Nullable(Float64),
+    sma_200       Nullable(Float64),
+    calculated_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(calculated_at)
+PARTITION BY toYYYYMM(time)
+ORDER BY (ticker, time);
 
 -- -- technical_indicators_daily: chỉ số ngắn hạn tính từ daily_price (incremental hàng ngày)
 -- --   RSI(3)  — phát hiện overbought/oversold ngắn hạn

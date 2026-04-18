@@ -34,4 +34,13 @@ with DAG(
         },
     )
 
-    ingest_task >> process_task
+    technical_indicator_task = PythonOperator(
+        task_id='technical_indicator_historical',
+        python_callable=SparkDockerExecOrchestrator,
+        op_kwargs={
+            'spark_class': 'hieunt.stock.spark.job.TechnicalIndicatorHistoricalJob',
+            'partition_path': None,
+        },
+    )
+
+    ingest_task >> process_task >> technical_indicator_task

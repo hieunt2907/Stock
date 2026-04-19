@@ -13,7 +13,7 @@ default_args = {
 with DAG(
     'stock_daily_backfill_pipeline',
     default_args=default_args,
-    schedule_interval=None,   # trigger thủ công
+    schedule_interval=None,
     catchup=False,
     tags=['stock', 'ingestion', 'backfill', 'shino'],
 ) as dag:
@@ -24,7 +24,6 @@ with DAG(
         op_kwargs={'script_name': 'backfill_historical_price.py'},
     )
 
-    # Backfill không truyền partition_path → Spark đọc toàn bộ folder
     process_task = PythonOperator(
         task_id='process_backfill_to_postgres',
         python_callable=SparkDockerExecOrchestrator,
@@ -34,13 +33,4 @@ with DAG(
         },
     )
 
-    technical_indicator_task = PythonOperator(
-        task_id='technical_indicator_historical',
-        python_callable=SparkDockerExecOrchestrator,
-        op_kwargs={
-            'spark_class': 'hieunt.stock.spark.job.TechnicalIndicatorHistoricalJob',
-            'partition_path': None,
-        },
-    )
-
-    ingest_task >> process_task >> technical_indicator_task
+    ingest_task >> process_task

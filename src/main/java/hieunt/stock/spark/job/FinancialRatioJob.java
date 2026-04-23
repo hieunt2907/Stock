@@ -2,18 +2,7 @@ package hieunt.stock.spark.job;
 
 import hieunt.stock.spark.processor.FinancialRatioProcessor;
 
-/**
- * FinancialRatioJob
- * -----------------
- * Entry-point cho Spark job xử lý financial_ratio.
- *
- * Args:
- *   args[0] (optional) — partition path, vd: "2026-04-20_14"
- *                         Nếu không truyền → đọc toàn bộ folder (backfill).
- *
- * Chạy qua spark-submit:
- *   spark-submit --class hieunt.stock.spark.job.FinancialRatioJob spark-job.jar [partitionPath]
- */
+
 public class FinancialRatioJob {
     public static void main(String[] args) {
         String partitionPath = (args != null && args.length > 0) ? args[0] : null;

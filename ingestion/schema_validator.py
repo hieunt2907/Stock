@@ -133,6 +133,39 @@ SCHEMAS: Dict[str, SchemaDefinition] = {
         not_null_columns=["ticker"],
         numeric_ranges={},
     ),
+
+    # ------------------------------------------------------------------
+    # financial_ratio: chỉ số tài chính từ Finance().financial_ratio()
+    # Áp dụng cho cả financial_ratio() và company_fundamental().
+    # Business key trong ClickHouse: (ticker, year, quarter)
+    # ------------------------------------------------------------------
+    "financial_ratio": SchemaDefinition(
+        required_columns=["ticker", "year", "quarter"],
+        column_types={
+            "ticker":  "O",   # string
+            "year":    "fi",  # int hoặc float (pandas đọc từ JSON có thể là float64)
+            "quarter": "O",   # string: Q1, Q2, Q3, Q4, Yearly
+            # Các chỉ số tài chính — chỉ check khi tồn tại trong DataFrame
+            "pe":                  "f",
+            "pb":                  "f",
+            "ps":                  "f",
+            "ev_ebitda":           "f",
+            "roe":                 "f",
+            "roa":                 "f",
+            "eps":                 "f",
+            "net_profit_margin":   "f",
+            "gross_profit_margin": "f",
+            "asset_turnover":      "f",
+            "current_ratio":       "f",
+            "debt_to_equity":      "f",
+        },
+        not_null_columns=["ticker", "year", "quarter"],
+        numeric_ranges={
+            # Cho phép giá trị tự do (không cắt cụt), chỉ khai báo để kiểm tra sự tồn tại
+            "pe": (None, None),
+            "pb": (None, None),
+        },
+    ),
 }
 
 

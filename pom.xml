@@ -163,6 +163,8 @@
                                     <exclude>org.apache.kafka:kafka-clients</exclude>
                                     <exclude>io.minio:minio</exclude>
                                     <exclude>org.slf4j:slf4j-simple</exclude>
+                                    <exclude>org.apache.spark:spark-sql-kafka-0-10_*</exclude>
+                                    <exclude>org.apache.spark:spark-token-provider-kafka-0-10_*</exclude>
                                 </excludes>
                             </artifactSet>
                             <filters>
@@ -175,6 +177,12 @@
                                     </excludes>
                                 </filter>
                             </filters>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>reference.conf</resource>
+                                </transformer>
+                            </transformers>
                         </configuration>
                     </execution>
 

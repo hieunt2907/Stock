@@ -102,6 +102,56 @@ ORDER BY (ticker, time);
 --  ANALYTICAL / DERIVED TABLES
 -- ============================================================
 
+-- fact_financial_ratio: chỉ số tài chính theo quý/năm từ Finance().financial_ratio()
+--   Source: MinIO financial_ratio/<partition>/<ticker>.json
+--   Cập nhật: @weekly (sau mỗi mùa báo cáo tài chính)
+CREATE TABLE IF NOT EXISTS stock.fact_financial_ratio (
+    ticker              String,
+    year                Int32,                      -- Năm báo cáo (2023, 2024, ...)
+    quarter             String,                     -- "Q1" | "Q2" | "Q3" | "Q4" | "Yearly"
+
+    -- Định giá
+    pe                  Nullable(Decimal(20, 4)),   -- Price-to-Earnings
+    pb                  Nullable(Decimal(20, 4)),   -- Price-to-Book
+    ps                  Nullable(Decimal(20, 4)),   -- Price-to-Sales
+    ev_ebitda           Nullable(Decimal(20, 4)),   -- EV/EBITDA
+
+    -- Khả năng sinh lời
+    roe                 Nullable(Decimal(20, 4)),   -- Return on Equity (%)
+    roa                 Nullable(Decimal(20, 4)),   -- Return on Assets (%)
+    eps                 Nullable(Decimal(20, 4)),   -- Earnings Per Share
+    net_profit_margin   Nullable(Decimal(20, 4)),   -- Biên lợi nhuận ròng (%)
+    gross_profit_margin Nullable(Decimal(20, 4)),   -- Biên lợi nhuận gộp (%)
+
+    -- Hiệu quả hoạt động
+    asset_turnover      Nullable(Decimal(20, 4)),   -- Vòng quay tài sản
+
+    -- Thanh khoản & đòn bẩy
+    current_ratio       Nullable(Decimal(20, 4)),   -- Tỷ số thanh toán hiện hành
+    debt_to_equity      Nullable(Decimal(20, 4)),   -- Nợ / Vốn chủ sở hữu
+) ENGINE = ReplacingMergeTree()
+ORDER BY (ticker, year, quarter)
+COMMENT 'Chỉ số tài chính theo quý — nguồn: Finance().financial_ratio() qua VCI';
+
+-- ============================================================
+--  REALTIME TABLES
+-- ============================================================
+
+-- fact_intraday_tick: dữ liệu khớp lệnh theo giây — nguồn Kafka intraday_tick
+CREATE TABLE IF NOT EXISTS stock.fact_intraday_tick (
+    ticker      String,
+    time        DateTime,
+    price       Decimal(20, 2),
+    volume      Int64,
+    match_type  String,          -- ATO | ATC | LO
+    buy_vol     Int64,
+    sell_vol    Int64,
+    ingested_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree()
+PARTITION BY (ticker, toYYYYMMDD(time))
+ORDER BY (ticker, time)
+COMMENT 'Khớp lệnh realtime (30s poll) — Spark Structured Streaming từ Kafka topic intraday_tick';
+
 -- technical_indicators_historical: chỉ số dài hạn tính từ daily_price_backfill
 --   RSI(14) — đánh giá xu hướng trung/dài hạn
 --   SMA(200) — đường trung bình 200 ngày (benchmark trend)

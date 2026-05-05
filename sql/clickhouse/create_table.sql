@@ -19,7 +19,7 @@ ORDER BY (ticker);
 
 -- dim_company: thông tin công ty (SCD Type 2 — giữ version)
 CREATE TABLE IF NOT EXISTS stock.dim_company (
-    ticker              String,          -- audit version từ Postgre
+    ticker              String,          -- audit version từ Postgres
     symbol              String,
     business_model      String,
     founded_date        String,

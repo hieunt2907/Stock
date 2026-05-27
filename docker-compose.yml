@@ -1,7 +1,10 @@
 name: ${COMPOSE_PROJECT_NAME:-real-time-stock-intelligence}
 
 x-airflow-common: &airflow-common
-  image: ${AIRFLOW_IMAGE:-apache/airflow:2.9.3}
+  build:
+    context: .
+    dockerfile: Dockerfile.airflow
+  image: ${AIRFLOW_IMAGE:-stock-airflow:2.9.3}
   environment: &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: ${AIRFLOW_EXECUTOR:-LocalExecutor}
     AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY:-}
@@ -14,11 +17,37 @@ x-airflow-common: &airflow-common
     AIRFLOW_VAR_KAFKA_BOOTSTRAP_SERVERS: kafka:${KAFKA_INTERNAL_PORT:-29092}
     AIRFLOW_VAR_CLICKHOUSE_HOST: clickhouse
     AIRFLOW_VAR_MINIO_ENDPOINT: http://minio:9000
-    _PIP_ADDITIONAL_REQUIREMENTS: ${AIRFLOW_PIP_ADDITIONAL_REQUIREMENTS:-apache-airflow-providers-apache-spark apache-airflow-providers-postgres}
+    PYTHONPATH: /opt/airflow/project
+    JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+    PATH: /usr/lib/jvm/java-17-openjdk-amd64/bin:/home/airflow/.local/bin:/usr/local/bin:/usr/bin:/bin
+    MINIO_ENDPOINT: minio:9000
+    MINIO_SPARK_ENDPOINT: http://minio:9000
+    MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+    MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+    MINIO_SECURE: ${MINIO_SECURE:-false}
+    MINIO_RAW_BUCKET: ${MINIO_RAW_BUCKET:-stock-raw}
+    MINIO_CANONICAL_BUCKET: ${MINIO_CANONICAL_BUCKET:-stock-canonical}
+    CLICKHOUSE_HOST: clickhouse
+    CLICKHOUSE_HTTP_PORT: 8123
+    CLICKHOUSE_DB: ${CLICKHOUSE_DB:-stocks}
+    CLICKHOUSE_USER: ${CLICKHOUSE_USER:-stock_user}
+    CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-stock_password}
+    CLICKHOUSE_TABLE: ${CLICKHOUSE_TABLE:-fact_stock_daily}
+    SPARK_MASTER: ${SPARK_MASTER:-local[*]}
+    SPARK_SQL_SHUFFLE_PARTITIONS: ${SPARK_SQL_SHUFFLE_PARTITIONS:-8}
+    SPARK_DEFAULT_PARALLELISM: ${SPARK_DEFAULT_PARALLELISM:-8}
+    SPARK_DRIVER_MEMORY: ${SPARK_DRIVER_MEMORY:-2g}
+    SPARK_DRIVER_CORES: ${SPARK_DRIVER_CORES:-1}
+    SPARK_EXECUTOR_MEMORY: ${SPARK_EXECUTOR_MEMORY:-2g}
+    SPARK_EXECUTOR_CORES: ${SPARK_EXECUTOR_CORES:-2}
+    SPARK_EXECUTOR_INSTANCES: ${SPARK_EXECUTOR_INSTANCES:-1}
+    SPARK_JARS_PACKAGES: ${SPARK_JARS_PACKAGES:-org.apache.hadoop:hadoop-aws:3.4.1}
+    _PIP_ADDITIONAL_REQUIREMENTS: ${AIRFLOW_PIP_ADDITIONAL_REQUIREMENTS:-}
   volumes:
     - ./airflow/dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs
     - ./airflow/plugins:/opt/airflow/plugins
+    - .:/opt/airflow/project
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     postgres:
@@ -89,46 +118,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-    restart: unless-stopped
-
-  spark-master:
-    image: ${SPARK_IMAGE:-spark:4.1.1}
-    container_name: stock-spark-master
-    environment:
-      SPARK_MODE: master
-      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
-      SPARK_RPC_ENCRYPTION_ENABLED: "no"
-      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
-      SPARK_SSL_ENABLED: "no"
-    ports:
-      - "${SPARK_MASTER_PORT:-7077}:7077"
-      - "${SPARK_MASTER_UI_PORT:-8081}:8080"
-    volumes:
-      - ./spark/apps:/opt/spark/apps
-      - ./spark/data:/opt/spark/data
-    networks:
-      - stock-platform
-    restart: unless-stopped
-
-  spark-worker:
-    image: ${SPARK_IMAGE:-spark:4.1.1}
-    container_name: stock-spark-worker
-    environment:
-      SPARK_MODE: worker
-      SPARK_MASTER_URL: spark://${SPARK_MASTER_HOST:-spark-master}:${SPARK_MASTER_PORT:-7077}
-      SPARK_WORKER_MEMORY: ${SPARK_WORKER_MEMORY:-2G}
-      SPARK_WORKER_CORES: ${SPARK_WORKER_CORES:-2}
-      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
-      SPARK_RPC_ENCRYPTION_ENABLED: "no"
-      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
-      SPARK_SSL_ENABLED: "no"
-    depends_on:
-      - spark-master
-    volumes:
-      - ./spark/apps:/opt/spark/apps
-      - ./spark/data:/opt/spark/data
-    networks:
-      - stock-platform
     restart: unless-stopped
 
   kafka:

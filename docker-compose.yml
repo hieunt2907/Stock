@@ -15,6 +15,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY:-stock-intelligence-local-secret}
     AIRFLOW_CONN_SPARK_DEFAULT: spark://${SPARK_MASTER_HOST:-spark-master}:${SPARK_MASTER_PORT:-7077}
     AIRFLOW_VAR_KAFKA_BOOTSTRAP_SERVERS: kafka:${KAFKA_INTERNAL_PORT:-29092}
+    KAFKA_BOOTSTRAP_SERVERS: kafka:${KAFKA_INTERNAL_PORT:-29092}
     AIRFLOW_VAR_CLICKHOUSE_HOST: clickhouse
     AIRFLOW_VAR_MINIO_ENDPOINT: http://minio:9000
     PYTHONPATH: /opt/airflow/project
@@ -41,7 +42,7 @@ x-airflow-common: &airflow-common
     SPARK_EXECUTOR_MEMORY: ${SPARK_EXECUTOR_MEMORY:-2g}
     SPARK_EXECUTOR_CORES: ${SPARK_EXECUTOR_CORES:-2}
     SPARK_EXECUTOR_INSTANCES: ${SPARK_EXECUTOR_INSTANCES:-1}
-    SPARK_JARS_PACKAGES: ${SPARK_JARS_PACKAGES:-org.apache.hadoop:hadoop-aws:3.4.1}
+    SPARK_JARS_PACKAGES: ${SPARK_JARS_PACKAGES:-org.apache.hadoop:hadoop-aws:3.4.1,org.apache.spark:spark-sql-kafka-0-10_2.13:4.1.1}
     _PIP_ADDITIONAL_REQUIREMENTS: ${AIRFLOW_PIP_ADDITIONAL_REQUIREMENTS:-}
   volumes:
     - ./airflow/dags:/opt/airflow/dags
@@ -55,10 +56,61 @@ x-airflow-common: &airflow-common
   networks:
     - stock-platform
 
+x-streaming-common: &streaming-common
+  build:
+    context: .
+    dockerfile: Dockerfile.airflow
+  image: ${AIRFLOW_IMAGE:-stock-airflow:2.9.3}
+  working_dir: /opt/airflow/project
+  entrypoint: /bin/bash
+  environment:
+    PYTHONPATH: /opt/airflow/project
+    JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+    PATH: /usr/lib/jvm/java-17-openjdk-amd64/bin:/home/airflow/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    KAFKA_BOOTSTRAP_SERVERS: kafka:${KAFKA_INTERNAL_PORT:-29092}
+    STOCK_TICK_RAW_TOPIC: ${STOCK_TICK_RAW_TOPIC:-stock_tick_raw}
+    STOCK_TICK_STARTING_OFFSETS: ${STOCK_TICK_STARTING_OFFSETS:-latest}
+    STOCK_TICK_PROCESSING_TIME: ${STOCK_TICK_PROCESSING_TIME:-10 seconds}
+    STOCK_TICK_WATERMARK: ${STOCK_TICK_WATERMARK:-2 minutes}
+    FINNHUB_API_KEY: ${FINNHUB_API_KEY:-}
+    FINNHUB_WS_URL: ${FINNHUB_WS_URL:-wss://ws.finnhub.io}
+    FINNHUB_SYMBOLS: ${FINNHUB_SYMBOLS:-AAPL,MSFT,NVDA,GOOG,META,AMZN,AMD,INTC,TSM,JPM,BAC,GS,V,WMT,COST,NFLX,DIS,TSLA,RIVN,SPY}
+    FINNHUB_STREAM_ACTIVE_SECONDS: ${FINNHUB_STREAM_ACTIVE_SECONDS:-10}
+    FINNHUB_STREAM_COOLDOWN_SECONDS: ${FINNHUB_STREAM_COOLDOWN_SECONDS:-60}
+    CLICKHOUSE_HOST: clickhouse
+    CLICKHOUSE_HTTP_PORT: 8123
+    CLICKHOUSE_DB: ${CLICKHOUSE_DB:-stocks}
+    CLICKHOUSE_USER: ${CLICKHOUSE_USER:-stock_user}
+    CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-stock_password}
+    MINIO_ENDPOINT: minio:9000
+    MINIO_SPARK_ENDPOINT: http://minio:9000
+    MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+    MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+    MINIO_SECURE: ${MINIO_SECURE:-false}
+    MINIO_RAW_BUCKET: ${MINIO_RAW_BUCKET:-stock-raw}
+    MINIO_CANONICAL_BUCKET: ${MINIO_CANONICAL_BUCKET:-stock-canonical}
+    SPARK_MASTER: ${SPARK_MASTER:-local[*]}
+    SPARK_SQL_SHUFFLE_PARTITIONS: ${SPARK_SQL_SHUFFLE_PARTITIONS:-8}
+    SPARK_DEFAULT_PARALLELISM: ${SPARK_DEFAULT_PARALLELISM:-8}
+    SPARK_DRIVER_MEMORY: ${SPARK_DRIVER_MEMORY:-2g}
+    SPARK_DRIVER_CORES: ${SPARK_DRIVER_CORES:-1}
+    SPARK_EXECUTOR_MEMORY: ${SPARK_EXECUTOR_MEMORY:-2g}
+    SPARK_EXECUTOR_CORES: ${SPARK_EXECUTOR_CORES:-2}
+    SPARK_EXECUTOR_INSTANCES: ${SPARK_EXECUTOR_INSTANCES:-1}
+    SPARK_JARS_PACKAGES: ${SPARK_JARS_PACKAGES:-org.apache.hadoop:hadoop-aws:3.4.1,org.apache.spark:spark-sql-kafka-0-10_2.13:4.1.1}
+  volumes:
+    - .:/opt/airflow/project
+  user: "${AIRFLOW_UID:-50000}:0"
+  networks:
+    - stock-platform
+  restart: unless-stopped
+
 services:
   postgres:
     image: ${POSTGRES_IMAGE:-postgres:15-alpine}
     container_name: stock-postgres
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-airflow}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-airflow}
@@ -146,6 +198,45 @@ services:
     networks:
       - stock-platform
     restart: unless-stopped
+
+  kafka-ui:
+    image: ${KAFKA_UI_IMAGE:-provectuslabs/kafka-ui:latest}
+    container_name: stock-kafka-ui
+    ports:
+      - "${KAFKA_UI_PORT:-8083}:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: stock-kraft
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:${KAFKA_INTERNAL_PORT:-29092}
+      DYNAMIC_CONFIG_ENABLED: "true"
+    depends_on:
+      - kafka
+    networks:
+      - stock-platform
+    restart: unless-stopped
+
+  finnhub-extract-streaming:
+    <<: *streaming-common
+    container_name: stock-finnhub-extract-streaming
+    command:
+      - -c
+      - |
+        python domain/stock/extract/extract_finhub_streaming.py \
+          --bootstrap-servers kafka:${KAFKA_INTERNAL_PORT:-29092}
+    depends_on:
+      - kafka
+
+  finnhub-transform-streaming:
+    <<: *streaming-common
+    container_name: stock-finnhub-transform-streaming
+    command:
+      - -c
+      - |
+        python domain/stock/tranform/tranform_finnhub_streaming.py \
+          --bootstrap-servers kafka:${KAFKA_INTERNAL_PORT:-29092}
+    depends_on:
+      - kafka
+      - minio
+      - clickhouse
 
   clickhouse:
     image: ${CLICKHOUSE_IMAGE:-clickhouse/clickhouse-server:24.8}

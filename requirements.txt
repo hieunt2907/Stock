@@ -8,4 +8,5 @@ pyarrow
 python-dotenv
 pyspark==4.1.1
 requests
+websocket-client
 yfinance

@@ -1,0 +1,123 @@
+<div class="auth-page">
+  <!-- Animated background -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Stock chart decorative lines -->
+  <svg class="chart-bg" viewBox="0 0 1200 400" preserveAspectRatio="none">
+    <polyline class="chart-line chart-line-1"
+      points="0,320 80,280 180,300 280,230 380,250 480,180 580,200 680,150 780,170 880,110 980,130 1080,90 1200,110" />
+    <polyline class="chart-line chart-line-2"
+      points="0,360 80,330 180,350 280,300 380,320 480,260 580,280 680,220 780,240 880,180 980,200 1080,160 1200,180" />
+  </svg>
+
+  <!-- Register card -->
+  <div class="auth-card">
+    <!-- Header -->
+    <div class="card-header">
+      <div class="logo-badge">
+        <span class="material-icons logo-icon">trending_up</span>
+      </div>
+      <h1 class="card-title">Tạo tài khoản</h1>
+      <p class="card-subtitle">Bắt đầu hành trình đầu tư thông minh</p>
+    </div>
+
+    <!-- Error banner -->
+    @if (errorMsg) {
+    <div class="error-banner">
+      <span class="material-icons error-icon">error_outline</span>
+      <span>{{ errorMsg }}</span>
+    </div>
+    }
+
+    <!-- Form -->
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form" novalidate>
+
+      <!-- Email field -->
+      <div class="field-group">
+        <label class="field-label" for="email">Email</label>
+        <div class="input-wrapper" [class.input-error]="email.invalid && email.touched">
+          <span class="material-icons input-icon">mail_outline</span>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            class="auth-input"
+            placeholder="you@example.com"
+            autocomplete="email" />
+        </div>
+        @if (email.touched && email.hasError('required')) {
+        <span class="field-error">Email không được để trống</span>
+        } @else if (email.touched && email.hasError('email')) {
+        <span class="field-error">Email không hợp lệ</span>
+        }
+      </div>
+
+      <!-- Password field -->
+      <div class="field-group">
+        <label class="field-label" for="password">Mật khẩu</label>
+        <div class="input-wrapper" [class.input-error]="password.invalid && password.touched">
+          <span class="material-icons input-icon">lock_outline</span>
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            formControlName="password"
+            class="auth-input"
+            placeholder="Tối thiểu 6 ký tự"
+            autocomplete="new-password" />
+          <button type="button" class="toggle-password" (click)="togglePassword()" tabindex="-1">
+            <span class="material-icons">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+          </button>
+        </div>
+        @if (password.touched && password.hasError('required')) {
+        <span class="field-error">Mật khẩu không được để trống</span>
+        } @else if (password.touched && password.hasError('minlength')) {
+        <span class="field-error">Mật khẩu tối thiểu 6 ký tự</span>
+        }
+      </div>
+
+      <!-- Confirm password field -->
+      <div class="field-group">
+        <label class="field-label" for="confirmPassword">Xác nhận mật khẩu</label>
+        <div class="input-wrapper"
+          [class.input-error]="(confirmPassword.touched && confirmPassword.hasError('required')) || (form.hasError('passwordMismatch') && confirmPassword.touched)">
+          <span class="material-icons input-icon">lock_outline</span>
+          <input
+            id="confirmPassword"
+            [type]="showConfirm ? 'text' : 'password'"
+            formControlName="confirmPassword"
+            class="auth-input"
+            placeholder="Nhập lại mật khẩu"
+            autocomplete="new-password" />
+          <button type="button" class="toggle-password" (click)="toggleConfirm()" tabindex="-1">
+            <span class="material-icons">{{ showConfirm ? 'visibility_off' : 'visibility' }}</span>
+          </button>
+        </div>
+        @if (confirmPassword.touched && confirmPassword.hasError('required')) {
+        <span class="field-error">Vui lòng xác nhận mật khẩu</span>
+        } @else if (form.hasError('passwordMismatch') && confirmPassword.touched) {
+        <span class="field-error">Mật khẩu không khớp</span>
+        }
+      </div>
+
+      <!-- Submit button -->
+      <button type="submit" class="btn-auth" [disabled]="loading">
+        @if (loading) {
+        <span class="spinner"></span>
+        <span>Đang tạo tài khoản...</span>
+        } @else {
+        <span class="material-icons btn-icon">person_add</span>
+        <span>Đăng ký</span>
+        }
+      </button>
+
+    </form>
+
+    <!-- Footer link -->
+    <div class="card-footer">
+      <span class="footer-text">Đã có tài khoản?</span>
+      <a routerLink="/login" class="footer-link">Đăng nhập</a>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,8 @@
+clickhouse-connect
+minio
+pandas>=2.2.0
+pyarrow
+python-dotenv
+pyspark==4.1.1
+requests
+yfinance

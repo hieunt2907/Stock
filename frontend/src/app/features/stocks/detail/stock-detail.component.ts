@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { forkJoin, interval, Subscription, of } from 'rxjs';
+import { forkJoin, interval, timer, Subscription, of } from 'rxjs';
 import { switchMap, catchError, tap } from 'rxjs/operators';
 import {
     createChart, IChartApi, ISeriesApi, SeriesType,
@@ -12,7 +12,6 @@ import {
     ColorType, CrosshairMode, LineStyle
 } from 'lightweight-charts';
 import { StockService } from '../../../../core/services/stock.service';
-import { TopbarComponent } from '../../../shared/topbar/topbar.component';
 import { StockResponse, StockTickResponse, StockOhlcResponse } from '../../../../core/models/stock.model';
 
 type Tab = 'overview' | 'daily' | 'ohlc';
@@ -20,13 +19,21 @@ type Tab = 'overview' | 'daily' | 'ohlc';
 @Component({
     selector: 'app-stock-detail',
     standalone: true,
-    imports: [CommonModule, RouterLink, TopbarComponent],
+    imports: [CommonModule, RouterLink],
     templateUrl: './stock-detail.component.html',
     styleUrl: './stock-detail.component.css'
 })
 export class StockDetailComponent implements OnInit, OnDestroy {
     private route    = inject(ActivatedRoute);
     private stockSvc = inject(StockService);
+
+    private static symbolCache = new Map<string, {
+        stock:     StockResponse;
+        daily:     StockResponse[];
+        ohlc:      StockOhlcResponse[];
+        latest:    StockTickResponse | null;
+        fetchedAt: number;
+    }>();
 
     symbol = signal('');
     tab    = signal<Tab>('overview');
@@ -100,6 +107,21 @@ export class StockDetailComponent implements OnInit, OnDestroy {
     private loadData(symbol: string) {
         this.loading.set(true);
         this.error.set('');
+
+        const cached  = StockDetailComponent.symbolCache.get(symbol);
+        const elapsed = cached ? Date.now() - cached.fetchedAt : Infinity;
+
+        // Re-use cached data if still within the poll window
+        if (cached && elapsed < this.POLL_MS) {
+            this.stock.set(cached.stock);
+            this.daily.set(cached.daily);
+            this.ohlc.set(cached.ohlc);
+            this.latest.set(cached.latest);
+            this.loading.set(false);
+            this.startPolling(symbol);
+            return;
+        }
+
         forkJoin({
             stock:  this.stockSvc.findStock(symbol).pipe(catchError(() => of(null))),
             daily:  this.stockSvc.findDaily(symbol).pipe(catchError(() => of([]))),
@@ -108,10 +130,17 @@ export class StockDetailComponent implements OnInit, OnDestroy {
         }).subscribe({
             next: ({ stock, daily, ohlc, latest }) => {
                 if (!stock) { this.error.set(`Không tìm thấy mã ${symbol}.`); this.loading.set(false); return; }
+                const sortedDaily = (daily as StockResponse[]).sort((a, b) => a.tradingDate.localeCompare(b.tradingDate));
+                const sortedOhlc  = (ohlc  as StockOhlcResponse[]).sort((a, b) => a.windowStart.localeCompare(b.windowStart));
                 this.stock.set(stock);
-                this.daily.set((daily as StockResponse[]).sort((a, b) => a.tradingDate.localeCompare(b.tradingDate)));
-                this.ohlc.set((ohlc as StockOhlcResponse[]).sort((a, b) => a.windowStart.localeCompare(b.windowStart)));
+                this.daily.set(sortedDaily);
+                this.ohlc.set(sortedOhlc);
                 this.latest.set(latest as StockTickResponse | null);
+                StockDetailComponent.symbolCache.set(symbol, {
+                    stock, daily: sortedDaily, ohlc: sortedOhlc,
+                    latest: latest as StockTickResponse | null,
+                    fetchedAt: Date.now()
+                });
                 this.loading.set(false);
                 this.startPolling(symbol);
             },
@@ -120,27 +149,45 @@ export class StockDetailComponent implements OnInit, OnDestroy {
     }
 
     private startPolling(symbol: string) {
-        // ── Realtime Widget: poll /latest every 60s ──
         this.pollSub?.unsubscribe();
-        this.pollSub = interval(this.POLL_MS).pipe(
-            switchMap(() => this.stockSvc.findLatest(symbol).pipe(catchError(() => of(null))))
-        ).subscribe({ next: t => { if (t) this.latest.set(t as StockTickResponse); this.nextRefresh.set(60); } });
-
-        // ── Countdown timer: tick every second ──
         this.countdownSub?.unsubscribe();
-        this.nextRefresh.set(60);
+        this.ohlcPollSub?.unsubscribe();
+
+        const cached  = StockDetailComponent.symbolCache.get(symbol);
+        const elapsed = cached ? Date.now() - cached.fetchedAt : Infinity;
+        const delay   = elapsed >= this.POLL_MS ? 0 : this.POLL_MS - elapsed;
+
+        this.nextRefresh.set(delay === 0 ? 60 : Math.ceil(delay / 1000));
+
+        // ── Realtime Widget: poll /latest ──
+        this.pollSub = timer(delay, this.POLL_MS).pipe(
+            switchMap(() => this.stockSvc.findLatest(symbol).pipe(catchError(() => of(null))))
+        ).subscribe({
+            next: t => {
+                if (t) {
+                    const tick = t as StockTickResponse;
+                    this.latest.set(tick);
+                    const c = StockDetailComponent.symbolCache.get(symbol);
+                    if (c) StockDetailComponent.symbolCache.set(symbol, { ...c, latest: tick, fetchedAt: Date.now() });
+                }
+                this.nextRefresh.set(60);
+            }
+        });
+
+        // ── Countdown ──
         this.countdownSub = interval(1_000).subscribe(() =>
-            this.nextRefresh.update(n => (n > 1 ? n - 1 : 60))
+            this.nextRefresh.update(n => n > 1 ? n - 1 : 60)
         );
 
-        // ── Candlestick Chart: poll /ohlc every 60s, rebuild if on ohlc tab ──
-        this.ohlcPollSub?.unsubscribe();
-        this.ohlcPollSub = interval(this.POLL_MS).pipe(
+        // ── Candlestick Chart: poll /ohlc ──
+        this.ohlcPollSub = timer(delay, this.POLL_MS).pipe(
             switchMap(() => this.stockSvc.findOhlc(symbol).pipe(catchError(() => of(null)))),
             tap(data => {
                 if (!data) return;
-                this.ohlc.set((data as StockOhlcResponse[])
-                    .sort((a, b) => a.windowStart.localeCompare(b.windowStart)));
+                const sorted = (data as StockOhlcResponse[]).sort((a, b) => a.windowStart.localeCompare(b.windowStart));
+                this.ohlc.set(sorted);
+                const c = StockDetailComponent.symbolCache.get(symbol);
+                if (c) StockDetailComponent.symbolCache.set(symbol, { ...c, ohlc: sorted });
             })
         ).subscribe({
             next: () => {

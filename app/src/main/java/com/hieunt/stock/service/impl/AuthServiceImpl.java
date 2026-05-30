@@ -27,6 +27,8 @@ import com.hieunt.stock.model.response.AuthFlowResponse;
 import com.hieunt.stock.model.response.AuthResponse;
 import com.hieunt.stock.repository.RoleRepository;
 import com.hieunt.stock.repository.UserRepository;
+import com.hieunt.stock.repository.PermissionRepository;
+import com.hieunt.stock.repository.entity.PermissionEntity;
 import com.hieunt.stock.repository.entity.RoleEntity;
 import com.hieunt.stock.repository.entity.UserEntity;
 import com.hieunt.stock.service.AuthService;
@@ -49,6 +51,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final PermissionRepository permissionRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redisTemplate;
@@ -207,7 +210,19 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private RoleEntity getOrCreateDefaultUserRole() {
-        return roleRepository.findByName("USER")
+        RoleEntity role = roleRepository.findByName("USER")
                 .orElseGet(() -> roleRepository.save(new RoleEntity("USER")));
+        role.getPermissions().add(getOrCreatePermission("stock:read"));
+        role.getPermissions().add(getOrCreatePermission("market:read"));
+        role.getPermissions().add(getOrCreatePermission("company:read"));
+        role.getPermissions().add(getOrCreatePermission("watchlist:read"));
+        role.getPermissions().add(getOrCreatePermission("watchlist:create"));
+        role.getPermissions().add(getOrCreatePermission("watchlist:delete"));
+        return roleRepository.save(role);
+    }
+
+    private PermissionEntity getOrCreatePermission(String name) {
+        return permissionRepository.findByName(name)
+                .orElseGet(() -> permissionRepository.save(new PermissionEntity(name, null)));
     }
 }

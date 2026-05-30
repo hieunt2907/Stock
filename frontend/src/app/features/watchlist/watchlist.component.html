@@ -1,0 +1,151 @@
+<div class="page">
+  <main class="main">
+
+    <!-- Header -->
+    <div class="page-header">
+      <h1 class="page-title">
+        <span class="material-icons">bookmark</span>
+        Watchlist
+        <span class="item-count">{{ sorted().length }} mã</span>
+      </h1>
+      <div class="live-bar">
+        <span class="live-badge"><span class="pulse"></span>Live</span>
+        <span class="countdown">
+          <span class="material-icons" style="font-size:13px">refresh</span>
+          {{ isRefreshing() ? 'Đang cập nhật...' : nextRefresh() + 's' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Add bar (autocomplete) -->
+    <div class="search-container">
+      <div class="search-wrap">
+        <span class="material-icons search-icon">add</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Thêm mã cổ phiếu vào watchlist..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearchInput()"
+          (keydown)="onKeydown($event)"
+          [disabled]="addLoading()"
+          autocomplete="off" />
+        @if (addLoading()) { <span class="input-spinner"></span> }
+      </div>
+
+      @if (showDropdown() && suggestions().length > 0) {
+      <div class="dropdown">
+        @for (c of suggestions(); track c.symbol; let i = $index) {
+        <div class="dropdown-item" [class.active]="activeIndex() === i"
+             (click)="selectSuggestion(c)" (mouseenter)="activeIndex.set(i)">
+          <div class="item-left">
+            <span class="item-sym">{{ c.symbol }}</span>
+            <span class="item-name">{{ c.companyName }}</span>
+          </div>
+          <div class="item-right">
+            @if (c.exchange) { <span class="item-ex">{{ c.exchange }}</span> }
+            @if (c.sector)   { <span class="item-sector">{{ c.sector }}</span> }
+          </div>
+          <span class="material-icons item-add-icon">add</span>
+        </div>
+        }
+      </div>
+      }
+
+      @if (addError()) {
+      <div class="add-error">
+        <span class="material-icons" style="font-size:15px">error_outline</span>
+        {{ addError() }}
+      </div>
+      }
+    </div>
+
+    <!-- Loading -->
+    @if (loading()) {
+    <div class="center-state"><div class="spinner"></div><p>Đang tải...</p></div>
+    }
+
+    <!-- Error -->
+    @else if (error()) {
+    <div class="center-state">
+      <span class="material-icons" style="font-size:3rem;opacity:.3">wifi_off</span>
+      <p>{{ error() }}</p>
+    </div>
+    }
+
+    <!-- Empty -->
+    @else if (sorted().length === 0) {
+    <div class="center-state">
+      <span class="material-icons empty-icon">bookmark_border</span>
+      <p class="empty-title">Watchlist trống</p>
+      <p class="empty-sub">Tìm và chọn mã cổ phiếu ở thanh bên trên để thêm vào</p>
+    </div>
+    }
+
+    <!-- Table -->
+    @else {
+    <div class="table-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th class="s" (click)="sort('symbol')">Mã <em>{{ icon('symbol') }}</em></th>
+            <th class="s" (click)="sort('companyName')">Công ty <em>{{ icon('companyName') }}</em></th>
+            <th class="s" (click)="sort('exchange')">Sàn <em>{{ icon('exchange') }}</em></th>
+            <th class="s" (click)="sort('sector')">Ngành <em>{{ icon('sector') }}</em></th>
+            <th class="s" (click)="sort('industry')">Lĩnh vực <em>{{ icon('industry') }}</em></th>
+            <th class="r">Mở</th>
+            <th class="r">Cao</th>
+            <th class="r">Thấp</th>
+            <th class="r s" (click)="sort('currentPrice')">Giá HT <em>{{ icon('currentPrice') }}</em></th>
+            <th class="r s" (click)="sort('volume')">KL <em>{{ icon('volume') }}</em></th>
+            <th class="r s" (click)="sort('dailyReturn')">% Ngày <em>{{ icon('dailyReturn') }}</em></th>
+            <th class="r s" (click)="sort('volatility')">Biến động <em>{{ icon('volatility') }}</em></th>
+            <th class="r">Cập nhật</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of sorted(); track r.symbol) {
+          <tr class="row" [class.deleting]="deletingSet().has(r.symbol)"
+              routerLink="/stocks/{{ r.symbol }}">
+            <td><span class="sym">{{ r.symbol }}</span></td>
+            <td class="co" [title]="r.companyName">{{ r.companyName || '—' }}</td>
+            <td><span class="ex-tag">{{ r.exchange || '—' }}</span></td>
+            <td class="sec" [title]="r.sector">{{ r.sector || '—' }}</td>
+            <td class="sec" [title]="r.industry">{{ r.industry || '—' }}</td>
+            <td class="r n">{{ fmt(r.open) }}</td>
+            <td class="r n hi">{{ fmt(r.high) }}</td>
+            <td class="r n lo">{{ fmt(r.low) }}</td>
+            <td class="r price-cell">
+              <span class="price-val" [class.live-price]="r.isLive">{{ fmt(r.currentPrice) }}</span>
+              @if (r.isLive) { <span class="live-dot-sm" [title]="r.liveTime"></span> }
+            </td>
+            <td class="r n">{{ fmtVol(r.volume) }}</td>
+            <td class="r">
+              <span class="ret" [class.rg]="(r.dailyReturn??0)>0" [class.rr]="(r.dailyReturn??0)<0" [class.rf]="(r.dailyReturn??0)===0">
+                {{ (r.dailyReturn??0)>0?'+':'' }}{{ fmt(r.dailyReturn) }}%
+              </span>
+            </td>
+            <td class="r n vola">{{ fmt(r.volatility) }}%</td>
+            <td class="r time">{{ r.isLive ? fmtTime(r.liveTime) : '—' }}</td>
+            <td class="r" (click)="$event.stopPropagation()">
+              <button class="btn-delete"
+                      (click)="removeSymbol(r.symbol)"
+                      [disabled]="deletingSet().has(r.symbol)"
+                      title="Xóa khỏi watchlist">
+                @if (deletingSet().has(r.symbol)) {
+                  <span class="spinner-sm"></span>
+                } @else {
+                  <span class="material-icons">close</span>
+                }
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+
+  </main>
+</div>

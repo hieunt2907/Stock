@@ -34,7 +34,7 @@ with DAG(
     description="Extract yfinance prices and company profiles, transform with Spark, and load to ClickHouse.",
     default_args=default_args,
     start_date=datetime(2026, 1, 1),
-    schedule="@daily",
+    schedule=None,
     catchup=False,
     max_active_runs=1,
     tags=["stock", "yfinance", "spark", "clickhouse"],

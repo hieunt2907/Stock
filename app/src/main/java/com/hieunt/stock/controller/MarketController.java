@@ -15,6 +15,7 @@ import com.hieunt.stock.model.response.MarketSummaryResponse;
 import com.hieunt.stock.model.response.MarketTopGainerResponse;
 import com.hieunt.stock.model.response.MarketTopLiquidityResponse;
 import com.hieunt.stock.service.MarketService;
+import com.hieunt.stock.util.SecurityUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,22 +28,31 @@ public class MarketController {
 
     @GetMapping("/summary")
     public ResponseEntity<BaseResponse<MarketSummaryResponse>> getSummary() {
+        checkAccess("read");
         return ResponseEntity.ok(success(marketService.getSummary()));
     }
 
     @GetMapping("/top-gainers")
     public ResponseEntity<BaseResponse<List<MarketTopGainerResponse>>> getTopGainers() {
+        checkAccess("read");
         return ResponseEntity.ok(success(marketService.getTopGainers()));
     }
 
     @GetMapping("/top-liquidity")
     public ResponseEntity<BaseResponse<List<MarketTopLiquidityResponse>>> getTopLiquidity() {
+        checkAccess("read");
         return ResponseEntity.ok(success(marketService.getTopLiquidity()));
     }
 
     @GetMapping("/sectors")
     public ResponseEntity<BaseResponse<List<MarketSectorResponse>>> getSectors() {
+        checkAccess("read");
         return ResponseEntity.ok(success(marketService.getSectors()));
+    }
+
+    private void checkAccess(String action) {
+        SecurityUtil.checkAnyRole(List.of("ADMIN", "USER"));
+        SecurityUtil.checkPermission("market", action);
     }
 
     private <T> BaseResponse<T> success(T data) {

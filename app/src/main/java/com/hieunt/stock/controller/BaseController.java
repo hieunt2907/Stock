@@ -44,8 +44,18 @@ public abstract class BaseController<D> {
      */
     protected abstract String getPermissionPrefix();
 
+    protected List<String> getAllowedRoles() {
+        return List.of();
+    }
+
+    protected void checkAccess(String action) {
+        SecurityUtil.checkAnyRole(getAllowedRoles());
+        SecurityUtil.checkPermission(getPermissionPrefix(), action);
+    }
+
     @PostMapping("/create")
     public ResponseEntity<BaseResponse<D>> create(@Valid @RequestBody D dto) throws HIEUNTException {
+        checkAccess("create");
         dto = getBaseService().create(dto);
         BaseResponse<D> baseResponse = new BaseResponse<>();
         baseResponse.setCode(HttpStatus.CREATED);
@@ -57,6 +67,7 @@ public abstract class BaseController<D> {
     @PutMapping("/update")
     public ResponseEntity<BaseResponse<D>> update(@RequestParam("id") Long id, @Valid @RequestBody D dto)
             throws HIEUNTException {
+        checkAccess("update");
         getBaseService().update(id, dto);
         BaseResponse<D> baseResponse = new BaseResponse<>();
         baseResponse.setCode(HttpStatus.OK);
@@ -67,6 +78,7 @@ public abstract class BaseController<D> {
 
     @DeleteMapping("/delete")
     public ResponseEntity<BaseResponse<D>> delete(@RequestParam("id") Long id) throws HIEUNTException {
+        checkAccess("delete");
         getBaseService().delete(id);
         D dto = getBaseService().findById(id);
         BaseResponse<D> baseResponse = new BaseResponse<>();
@@ -78,6 +90,7 @@ public abstract class BaseController<D> {
 
     @GetMapping("/findById")
     public ResponseEntity<BaseResponse<D>> findById(@RequestParam("id") Long id) throws HIEUNTException {
+        checkAccess("read");
         D dto = getBaseService().findById(id);
         BaseResponse<D> baseResponse = new BaseResponse<>();
         baseResponse.setCode(HttpStatus.OK);
@@ -90,7 +103,7 @@ public abstract class BaseController<D> {
     public ResponseEntity<BaseResponse<Page<D>>> search(
             @RequestParam(value = "filter", required = false) String filter,
             Pageable pageable) throws HIEUNTException {
-        // SecurityUtil.checkPermission(getPermissionPrefix(), "read");
+        checkAccess("read");
         Page<D> dtos = getBaseService().search(filter, pageable);
         BaseResponse<Page<D>> baseResponse = new BaseResponse<>();
         baseResponse.setCode(HttpStatus.OK);
@@ -101,6 +114,7 @@ public abstract class BaseController<D> {
 
     @GetMapping("/findAll")
     public ResponseEntity<BaseResponse<List<D>>> findAll() throws HIEUNTException {
+        checkAccess("read");
         List<D> dtos = getBaseService().findAll();
         BaseResponse<List<D>> baseResponse = new BaseResponse<>();
         baseResponse.setCode(HttpStatus.OK);

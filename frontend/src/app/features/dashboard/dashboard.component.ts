@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { MarketService } from '../../../core/services/market.service';
-import { TopbarComponent } from '../../shared/topbar/topbar.component';
 import {
     MarketSummaryResponse,
     MarketTopGainerResponse,
@@ -14,7 +13,7 @@ import {
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [CommonModule, RouterLink, TopbarComponent],
+    imports: [CommonModule, RouterLink],
     templateUrl: './dashboard.component.html',
     styleUrl: './dashboard.component.css'
 })

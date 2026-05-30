@@ -1,5 +1,7 @@
 package com.hieunt.stock.controller;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,5 +26,10 @@ public class RoleController extends BaseController<RoleEntity> {
     @Override
     protected String getPermissionPrefix() {
         return "role";
+    }
+
+    @Override
+    protected List<String> getAllowedRoles() {
+        return List.of("ADMIN");
     }
 }

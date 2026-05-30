@@ -1,0 +1,53 @@
+<aside class="sidebar" [class.collapsed]="svc.collapsed()">
+
+  <!-- Top: logo only -->
+  <div class="sidebar-top">
+    <a routerLink="/dashboard" class="brand">
+      <img src="logo.png" alt="h" class="brand-logo" />
+      @if (!svc.collapsed()) {
+        <span class="brand-name">Stock Intelligence</span>
+      }
+    </a>
+  </div>
+
+  <!-- Nav links -->
+  <nav class="nav">
+    @for (item of navItems; track item.path) {
+    <a [routerLink]="item.path" routerLinkActive="active"
+       class="nav-item" [title]="item.label">
+      <span class="material-icons nav-icon">{{ item.icon }}</span>
+      @if (!svc.collapsed()) {
+        <span class="nav-label">{{ item.label }}</span>
+      }
+    </a>
+    }
+  </nav>
+
+  <!-- Bottom: user + logout -->
+  <div class="sidebar-bottom">
+    @if (currentUser(); as user) {
+    <div class="user-info" [title]="user.username">
+      <span class="material-icons user-icon">account_circle</span>
+      @if (!svc.collapsed()) {
+        <span class="username">{{ user.username }}</span>
+      }
+    </div>
+    }
+    <button class="logout-btn" (click)="logout()" title="Đăng xuất">
+      <span class="material-icons">logout</span>
+      @if (!svc.collapsed()) {
+        <span>Đăng xuất</span>
+      }
+    </button>
+  </div>
+
+</aside>
+
+<!-- Toggle button — ngoài sidebar, bám theo cạnh phải của sidebar -->
+<button class="toggle-tab"
+        (click)="svc.toggle()"
+        [title]="svc.collapsed() ? 'Mở rộng' : 'Thu gọn'">
+  <span class="material-icons">
+    {{ svc.collapsed() ? 'chevron_right' : 'chevron_left' }}
+  </span>
+</button>

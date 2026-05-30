@@ -125,6 +125,15 @@ services:
     networks:
       - stock-platform
 
+  redis:
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    container_name: stock-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - stock-platform
+    restart: unless-stopped
+
   airflow-init:
     <<: *airflow-common
     container_name: stock-airflow-init

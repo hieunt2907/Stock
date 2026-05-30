@@ -1,5 +1,5 @@
-.page { min-height: 100vh; background: #000; color: #fff; display: flex; flex-direction: column; }
-.main { flex: 1; padding: 1.5rem; max-width: 1600px; width: 100%; margin: 0 auto; }
+.page { min-height: 100vh; background: #000; color: #fff; }
+.main { padding: 1.5rem; max-width: 1600px; width: 100%; margin: 0 auto; }
 .page-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; margin-bottom: 1.25rem; }
 .page-title  { display: flex; align-items: center; gap: .5rem; font-size: 1.25rem; font-weight: 800; color: #fff; }
 .page-title .material-icons { color: #00d4ff; }

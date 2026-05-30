@@ -2,10 +2,9 @@ import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { interval, Subscription, of } from 'rxjs';
+import { interval, timer, Subscription, of } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
 import { StockService } from '../../../core/services/stock.service';
-import { TopbarComponent } from '../../shared/topbar/topbar.component';
 import { StockResponse, StockTickResponse } from '../../../core/models/stock.model';
 
 type SortField = 'symbol' | 'companyName' | 'exchange' | 'sector' | 'industry'
@@ -22,12 +21,13 @@ export interface StockRow extends StockResponse {
 @Component({
     selector: 'app-stock-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, TopbarComponent],
+    imports: [CommonModule, FormsModule, RouterLink],
     templateUrl: './stock-list.component.html',
     styleUrl: './stock-list.component.css'
 })
 export class StockListComponent implements OnInit, OnDestroy {
     private stockSvc = inject(StockService);
+    private static lastFetchTime = 0;
 
     rows    = signal<StockRow[]>([]);
     loading = signal(true);
@@ -91,33 +91,30 @@ export class StockListComponent implements OnInit, OnDestroy {
     }
 
     private startPricePolling(symbols: string[]) {
-        // First fetch immediately
-        this.fetchLatest(symbols);
+        const elapsed  = Date.now() - StockListComponent.lastFetchTime;
+        const delay    = elapsed >= this.POLL_MS ? 0 : this.POLL_MS - elapsed;
 
-        // Then poll every 60s
-        this.pollSub = interval(this.POLL_MS).pipe(
+        this.nextRefresh.set(delay === 0 ? 60 : Math.ceil(delay / 1000));
+
+        // timer(delay, period): fires after `delay` ms then every POLL_MS.
+        // delay=0 → fetch immediately (data stale); delay>0 → wait remainder.
+        this.pollSub = timer(delay, this.POLL_MS).pipe(
             switchMap(() => {
                 this.isRefreshing.set(true);
                 return this.stockSvc.findLatestBatch(symbols).pipe(catchError(() => of([])));
             })
         ).subscribe({
             next: (ticks) => {
+                StockListComponent.lastFetchTime = Date.now();
                 this.applyTicks(ticks as StockTickResponse[]);
                 this.isRefreshing.set(false);
                 this.nextRefresh.set(60);
             }
         });
 
-        // Countdown
-        this.nextRefresh.set(60);
         this.countdownSub = interval(1_000).subscribe(() =>
             this.nextRefresh.update(n => n > 1 ? n - 1 : 60)
         );
-    }
-
-    private fetchLatest(symbols: string[]) {
-        this.stockSvc.findLatestBatch(symbols).pipe(catchError(() => of([])))
-            .subscribe(ticks => this.applyTicks(ticks as StockTickResponse[]));
     }
 
     private applyTicks(ticks: StockTickResponse[]) {

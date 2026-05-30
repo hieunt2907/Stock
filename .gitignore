@@ -6,3 +6,9 @@ __pycache__/
 application.yml
 logs/
 *.log
+frontend/src/environments/environment.prod.ts
+frontend/src/environments/environment.ts
+domain/stock/sql/ch.sql
+domain/stock/sql/data_mart.sql
+domain/stock/sql/dim_company.sql
+domain/stock/sql/real_time.sql

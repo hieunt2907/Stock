@@ -25,7 +25,7 @@ default_args = {
     "owner": "stock-platform",
     "depends_on_past": False,
     "retries": 1,
-    "retry_delay": timedelta(minutes=5),
+    "retry_delay": timedelta(minutes=1),
 }
 
 

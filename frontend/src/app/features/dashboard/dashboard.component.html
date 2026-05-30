@@ -1,0 +1,173 @@
+<div class="page">
+  <app-topbar />
+
+  <main class="main">
+
+    <!-- Loading -->
+    @if (loading()) {
+    <div class="center-state">
+      <div class="spinner"></div>
+      <p>Đang tải dữ liệu thị trường...</p>
+    </div>
+    }
+
+    <!-- Error -->
+    @else if (error()) {
+    <div class="center-state">
+      <span class="material-icons" style="font-size:3rem;opacity:.3">wifi_off</span>
+      <p>{{ error() }}</p>
+    </div>
+    }
+
+    @else {
+
+    <!-- ── Market Summary ── -->
+    @if (summary(); as s) {
+    <section class="section">
+      <h2 class="section-title">
+        <span class="material-icons">bar_chart</span>
+        Tổng quan thị trường
+        <span class="date-chip">{{ s.tradingDate }}</span>
+      </h2>
+
+      <div class="summary-grid">
+        <!-- Total symbols -->
+        <div class="sum-card">
+          <span class="sum-label">Tổng mã</span>
+          <span class="sum-val">{{ s.totalSymbols }}</span>
+        </div>
+        <!-- Total volume -->
+        <div class="sum-card">
+          <span class="sum-label">Tổng KL</span>
+          <span class="sum-val">{{ fmtShort(s.totalVolume) }}</span>
+        </div>
+        <!-- Total value -->
+        <div class="sum-card">
+          <span class="sum-label">Tổng GT (VND)</span>
+          <span class="sum-val">{{ fmtShort(s.totalValue) }}</span>
+        </div>
+        <!-- Avg return -->
+        <div class="sum-card" [class.green]="s.avgReturn > 0" [class.red]="s.avgReturn < 0">
+          <span class="sum-label">TB thị trường</span>
+          <span class="sum-val">{{ s.avgReturn > 0 ? '+' : '' }}{{ fmt(s.avgReturn) }}%</span>
+        </div>
+        <!-- Advancers / Decliners -->
+        <div class="sum-card adv-card">
+          <span class="sum-label">Tăng / Giảm / Không đổi</span>
+          <div class="adv-nums">
+            <span class="adv-green">↑ {{ s.advancers }}</span>
+            <span class="adv-red">↓ {{ s.decliners }}</span>
+            <span class="adv-flat">= {{ s.unchanged }}</span>
+          </div>
+          <div class="adv-bar">
+            <div class="adv-bar-green" [style.width.%]="advancerPct()"></div>
+            <div class="adv-bar-red"   [style.width.%]="declinerPct()"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    }
+
+    <!-- ── Top Gainers + Top Liquidity ── -->
+    <div class="two-col">
+
+      <!-- Top 10 Gainers -->
+      <section class="section">
+        <h2 class="section-title">
+          <span class="material-icons green-icon">trending_up</span>
+          Top tăng mạnh nhất
+        </h2>
+        <div class="mini-table-wrap">
+          <table class="mini-table">
+            <thead>
+              <tr><th>#</th><th>Mã</th><th>Công ty</th><th>Ngành</th><th class="r">Giá</th><th class="r">% Ngày</th></tr>
+            </thead>
+            <tbody>
+              @for (g of gainers(); track g.symbol) {
+              <tr class="mini-row" routerLink="/stocks/{{ g.symbol }}">
+                <td class="rank">{{ g.rank }}</td>
+                <td><span class="sym">{{ g.symbol }}</span></td>
+                <td class="col-co" [title]="g.companyName">{{ g.companyName }}</td>
+                <td class="col-sec" [title]="g.sector">{{ g.sector || '—' }}</td>
+                <td class="r num">{{ fmt(g.close) }}</td>
+                <td class="r">
+                  <span class="ret ret-green">+{{ fmt(g.dailyReturn) }}%</span>
+                </td>
+              </tr>
+              } @empty {
+              <tr><td colspan="6" class="empty">Không có dữ liệu</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Top 10 Liquidity -->
+      <section class="section">
+        <h2 class="section-title">
+          <span class="material-icons blue-icon">water_drop</span>
+          Top thanh khoản cao nhất
+        </h2>
+        <div class="mini-table-wrap">
+          <table class="mini-table">
+            <thead>
+              <tr><th>#</th><th>Mã</th><th>Công ty</th><th>Ngành</th><th class="r">KL</th><th class="r">GT (tỷ)</th></tr>
+            </thead>
+            <tbody>
+              @for (lq of liquidity(); track lq.symbol) {
+              <tr class="mini-row" routerLink="/stocks/{{ lq.symbol }}">
+                <td class="rank">{{ lq.rank }}</td>
+                <td><span class="sym">{{ lq.symbol }}</span></td>
+                <td class="col-co" [title]="lq.companyName">{{ lq.companyName }}</td>
+                <td class="col-sec" [title]="lq.sector">{{ lq.sector || '—' }}</td>
+                <td class="r num">{{ fmtShort(lq.volume) }}</td>
+                <td class="r num">{{ fmtShort(lq.value) }}</td>
+              </tr>
+              } @empty {
+              <tr><td colspan="6" class="empty">Không có dữ liệu</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ── Sector Performance ── -->
+    <section class="section">
+      <h2 class="section-title">
+        <span class="material-icons">pie_chart</span>
+        Hiệu suất theo ngành
+      </h2>
+      <div class="sector-grid">
+        @for (sec of sortedSectors(); track sec.sector) {
+        <div class="sector-card" [class.sec-green]="sec.avgReturn > 0" [class.sec-red]="sec.avgReturn < 0">
+          <div class="sec-header">
+            <span class="sec-name">{{ sec.sector || 'Không rõ' }}</span>
+            <span class="sec-ret" [class.green]="sec.avgReturn > 0" [class.red]="sec.avgReturn < 0">
+              {{ sec.avgReturn > 0 ? '+' : '' }}{{ fmt(sec.avgReturn) }}%
+            </span>
+          </div>
+          <div class="sec-bar-bg">
+            <div class="sec-bar-fill"
+              [class.fill-green]="sec.avgReturn > 0"
+              [class.fill-red]="sec.avgReturn < 0"
+              [style.width.%]="Math.min(Math.abs(sec.avgReturn) * 10, 100)">
+            </div>
+          </div>
+          <div class="sec-stats">
+            <span>{{ sec.totalSymbols }} mã</span>
+            <span>KL: {{ fmtShort(sec.totalVolume) }}</span>
+            <span class="sec-best" [title]="sec.bestSymbol">↑ {{ sec.bestSymbol }}</span>
+            <span class="sec-worst" [title]="sec.worstSymbol">↓ {{ sec.worstSymbol }}</span>
+          </div>
+        </div>
+        } @empty {
+        <p class="empty">Không có dữ liệu ngành</p>
+        }
+      </div>
+    </section>
+
+    }
+  </main>
+</div>

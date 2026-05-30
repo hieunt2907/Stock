@@ -46,7 +46,6 @@ public abstract class BaseController<D> {
 
     @PostMapping("/create")
     public ResponseEntity<BaseResponse<D>> create(@Valid @RequestBody D dto) throws HIEUNTException {
-        SecurityUtil.checkPermission(getPermissionPrefix(), "create");
         dto = getBaseService().create(dto);
         BaseResponse<D> baseResponse = new BaseResponse<>();
         baseResponse.setCode(HttpStatus.CREATED);
@@ -58,7 +57,6 @@ public abstract class BaseController<D> {
     @PutMapping("/update")
     public ResponseEntity<BaseResponse<D>> update(@RequestParam("id") Long id, @Valid @RequestBody D dto)
             throws HIEUNTException {
-        SecurityUtil.checkPermission(getPermissionPrefix(), "update");
         getBaseService().update(id, dto);
         BaseResponse<D> baseResponse = new BaseResponse<>();
         baseResponse.setCode(HttpStatus.OK);
@@ -69,7 +67,6 @@ public abstract class BaseController<D> {
 
     @DeleteMapping("/delete")
     public ResponseEntity<BaseResponse<D>> delete(@RequestParam("id") Long id) throws HIEUNTException {
-        SecurityUtil.checkPermission(getPermissionPrefix(), "delete");
         getBaseService().delete(id);
         D dto = getBaseService().findById(id);
         BaseResponse<D> baseResponse = new BaseResponse<>();
@@ -81,7 +78,6 @@ public abstract class BaseController<D> {
 
     @GetMapping("/findById")
     public ResponseEntity<BaseResponse<D>> findById(@RequestParam("id") Long id) throws HIEUNTException {
-        SecurityUtil.checkPermission(getPermissionPrefix(), "read");
         D dto = getBaseService().findById(id);
         BaseResponse<D> baseResponse = new BaseResponse<>();
         baseResponse.setCode(HttpStatus.OK);
@@ -105,7 +101,6 @@ public abstract class BaseController<D> {
 
     @GetMapping("/findAll")
     public ResponseEntity<BaseResponse<List<D>>> findAll() throws HIEUNTException {
-        SecurityUtil.checkPermission(getPermissionPrefix(), "read");
         List<D> dtos = getBaseService().findAll();
         BaseResponse<List<D>> baseResponse = new BaseResponse<>();
         baseResponse.setCode(HttpStatus.OK);

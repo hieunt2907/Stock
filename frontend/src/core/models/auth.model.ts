@@ -6,14 +6,26 @@ export interface AuthResponse {
     token_type: string;
 }
 
+export interface AuthFlowResponse {
+    email: string;
+    registered: boolean;
+    otp_sent: boolean;
+    next_step: 'VERIFY_LOGIN_OTP' | 'VERIFY_REGISTER_OTP' | 'REGISTER_REQUIRED';
+    expires_in: number;
+}
+
+export interface LoginRequest {
+    email: string;
+}
+
 export interface RegisterRequest {
     email: string;
     password: string;
 }
 
-export interface LoginRequest {
+export interface VerifyOtpRequest {
     email: string;
-    password: string;
+    otp: string;
 }
 
 export interface BaseResponse<T> {

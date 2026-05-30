@@ -121,17 +121,19 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(0, 212, 255, 0.15));
-    border: 1px solid rgba(124, 58, 237, 0.25);
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     margin-bottom: 1rem;
+    box-shadow: 0 0 24px rgba(255, 255, 255, 0.06);
 }
 
-.logo-icon {
-    font-size: 28px;
-    color: #a78bfa;
+.logo-img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
 }
 
 .card-title {
@@ -357,14 +359,117 @@
     text-decoration: underline;
 }
 
+/* ===== Step indicator ===== */
+.step-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.step-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.35);
+    transition: all 0.3s;
+}
+
+.step-dot.active {
+    background: #a78bfa;
+    border-color: #a78bfa;
+    color: #000;
+    box-shadow: 0 0 12px rgba(167, 139, 250, 0.4);
+}
+
+.step-dot.done {
+    background: rgba(167, 139, 250, 0.15);
+    border-color: rgba(167, 139, 250, 0.4);
+    color: #a78bfa;
+}
+
+.step-line {
+    width: 48px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: background 0.3s;
+}
+
+.step-line.done { background: rgba(167, 139, 250, 0.4); }
+
+/* ===== OTP ===== */
+.otp-input {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.5rem;
+    text-align: center;
+    padding-left: 3rem;
+}
+
+.otp-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    margin-top: -0.25rem;
+}
+
+.otp-countdown {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-variant-numeric: tabular-nums;
+}
+
+.otp-expired { color: #f87171; font-weight: 600; }
+
+.resend-btn {
+    background: none;
+    border: none;
+    color: #a78bfa;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    transition: color 0.2s;
+}
+
+.resend-btn:hover:not(:disabled) { color: #c4b5fd; text-decoration: underline; }
+.resend-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== Back button ===== */
+.btn-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 0.65rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: -0.25rem;
+}
+
+.btn-back:hover { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.75); }
+.btn-back .material-icons { font-size: 16px; }
+
 /* ===== Responsive ===== */
 @media (max-width: 480px) {
-    .auth-card {
-        padding: 2rem 1.25rem;
-        border-radius: 16px;
-    }
-
-    .card-title {
-        font-size: 1.5rem;
-    }
+    .auth-card { padding: 2rem 1.25rem; border-radius: 16px; }
+    .card-title { font-size: 1.5rem; }
 }

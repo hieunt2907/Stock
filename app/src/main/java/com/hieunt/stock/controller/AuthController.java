@@ -14,6 +14,8 @@ import com.hieunt.stock.exception.HIEUNTException;
 import com.hieunt.stock.model.BaseResponse;
 import com.hieunt.stock.model.request.LoginRequest;
 import com.hieunt.stock.model.request.RegisterRequest;
+import com.hieunt.stock.model.request.VerifyOtpRequest;
+import com.hieunt.stock.model.response.AuthFlowResponse;
 import com.hieunt.stock.model.response.AuthResponse;
 import com.hieunt.stock.service.AuthService;
 
@@ -27,10 +29,10 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<BaseResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request)
+    public ResponseEntity<BaseResponse<AuthFlowResponse>> register(@Valid @RequestBody RegisterRequest request)
             throws HIEUNTException {
-        AuthResponse authResponse = authService.register(request);
-        return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
+        AuthFlowResponse authResponse = authService.register(request);
+        return ResponseEntity.ok(BaseResponse.<AuthFlowResponse>builder()
                 .code(HttpStatus.CREATED)
                 .message(SuccessMessageKey.CREATE)
                 .data(authResponse)
@@ -38,13 +40,33 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<BaseResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request)
+    public ResponseEntity<BaseResponse<AuthFlowResponse>> login(@Valid @RequestBody LoginRequest request)
             throws HIEUNTException {
-        AuthResponse authResponse = authService.login(request);
-        return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
+        AuthFlowResponse authResponse = authService.login(request);
+        return ResponseEntity.ok(BaseResponse.<AuthFlowResponse>builder()
                 .code(HttpStatus.OK)
                 .message(SuccessMessageKey.SUCCESS)
                 .data(authResponse)
+                .build());
+    }
+
+    @PostMapping("/register/verify-otp")
+    public ResponseEntity<BaseResponse<AuthResponse>> verifyRegisterOtp(@Valid @RequestBody VerifyOtpRequest request)
+            throws HIEUNTException {
+        return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
+                .code(HttpStatus.OK)
+                .message(SuccessMessageKey.SUCCESS)
+                .data(authService.verifyRegisterOtp(request))
+                .build());
+    }
+
+    @PostMapping("/login/verify-otp")
+    public ResponseEntity<BaseResponse<AuthResponse>> verifyLoginOtp(@Valid @RequestBody VerifyOtpRequest request)
+            throws HIEUNTException {
+        return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
+                .code(HttpStatus.OK)
+                .message(SuccessMessageKey.SUCCESS)
+                .data(authService.verifyLoginOtp(request))
                 .build());
     }
 }

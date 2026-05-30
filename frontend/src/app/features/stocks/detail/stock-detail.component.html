@@ -1,0 +1,229 @@
+<div class="page">
+  <app-topbar />
+
+  <main class="main">
+
+    <!-- Loading -->
+    @if (loading()) {
+    <div class="center-state"><div class="spinner"></div><p>Đang tải...</p></div>
+    }
+
+    <!-- Error -->
+    @else if (error()) {
+    <div class="center-state">
+      <span class="material-icons" style="font-size:3rem;opacity:.3">wifi_off</span>
+      <p>{{ error() }}</p>
+    </div>
+    }
+
+    @else {
+
+    <!-- ── Header ── -->
+    @if (stock(); as s) {
+    <div class="stock-header">
+      <div class="header-left">
+        <a routerLink="/stocks" class="back-btn">
+          <span class="material-icons">arrow_back_ios</span>
+        </a>
+        <div>
+          <div class="symbol-row">
+            <span class="sym-big">{{ s.symbol }}</span>
+            <span class="ex-tag">{{ s.exchange }}</span>
+            <span class="sector-tag">{{ s.sector }}</span>
+          </div>
+          <div class="co-name">{{ s.companyName }}</div>
+          <div class="industry-name">{{ s.industry }}</div>
+        </div>
+      </div>
+
+      <!-- Realtime widget -->
+      <div class="realtime-widget">
+        @if (latest(); as lq) {
+        <div class="rt-price">{{ fmt(lq.price) }}</div>
+        <div class="rt-meta">
+          <span class="rt-vol">KL: {{ lq.volume?.toLocaleString('vi-VN') }}</span>
+          <span class="rt-time">{{ fmtTime(lq.eventTime) }}</span>
+        </div>
+        <div class="rt-footer">
+          <div class="rt-badge">
+            <span class="pulse"></span>
+            Live
+          </div>
+          <span class="rt-countdown">
+            <span class="material-icons" style="font-size:11px">refresh</span>
+            {{ nextRefresh() }}s
+          </span>
+        </div>
+        } @else {
+        <div class="rt-price">{{ fmt(s.close) }}</div>
+        <div class="rt-meta">Ngày {{ s.tradingDate }}</div>
+        <div class="rt-footer">
+          <span class="rt-countdown">
+            <span class="material-icons" style="font-size:11px">refresh</span>
+            {{ nextRefresh() }}s
+          </span>
+        </div>
+        }
+      </div>
+
+      <!-- Daily stats -->
+      <div class="stat-grid">
+        <div class="stat"><span class="sl">Mở cửa</span><span class="sv">{{ fmt(s.open) }}</span></div>
+        <div class="stat"><span class="sl">Cao</span><span class="sv hi">{{ fmt(s.high) }}</span></div>
+        <div class="stat"><span class="sl">Thấp</span><span class="sv lo">{{ fmt(s.low) }}</span></div>
+        <div class="stat"><span class="sl">Đóng</span><span class="sv">{{ fmt(s.close) }}</span></div>
+        <div class="stat"><span class="sl">KL</span><span class="sv">{{ fmtShort(s.volume) }}</span></div>
+        <div class="stat"><span class="sl">GT</span><span class="sv">{{ fmtShort(s.value) }}</span></div>
+        <div class="stat">
+          <span class="sl">% Ngày</span>
+          <span class="sv" [class.hi]="(s.dailyReturn??0)>0" [class.lo]="(s.dailyReturn??0)<0">
+            {{ (s.dailyReturn??0)>0?'+':'' }}{{ fmt(s.dailyReturn) }}%
+          </span>
+        </div>
+        <div class="stat"><span class="sl">Biến động</span><span class="sv vola">{{ fmt(s.volatility) }}%</span></div>
+      </div>
+    </div>
+    }
+
+    <!-- ── Price change banner ── -->
+    @if (priceChange(); as pc) {
+    <div class="change-banner" [class.up]="pc.abs >= 0" [class.dn]="pc.abs < 0">
+      <span class="material-icons">{{ pc.abs >= 0 ? 'trending_up' : 'trending_down' }}</span>
+      Thay đổi kỳ lịch sử:
+      <strong>{{ pc.abs >= 0 ? '+' : '' }}{{ fmt(pc.abs) }}</strong>
+      <strong>({{ pc.pct >= 0 ? '+' : '' }}{{ fmt(pc.pct) }}%)</strong>
+    </div>
+    }
+
+    <!-- ── Tabs ── -->
+    <div class="tabs">
+      <button class="tab-btn" [class.active]="tab()==='overview'" (click)="setTab('overview')">
+        <span class="material-icons">info</span> Tổng quan
+      </button>
+      <button class="tab-btn" [class.active]="tab()==='daily'" (click)="setTab('daily')">
+        <span class="material-icons">timeline</span> Lịch sử giá
+      </button>
+      <button class="tab-btn" [class.active]="tab()==='ohlc'" (click)="setTab('ohlc')">
+        <span class="material-icons">candlestick_chart</span> Candlestick
+      </button>
+    </div>
+
+    <!-- ── Tab: Overview ── -->
+    @if (tab() === 'overview') {
+    <section class="tab-content">
+      <h3 class="ct">Thông tin công ty</h3>
+      @if (stock(); as s) {
+      <div class="info-grid">
+        <div class="info-row"><span class="ik">Mã CK</span><span class="iv sym-sm">{{ s.symbol }}</span></div>
+        <div class="info-row"><span class="ik">Tên công ty</span><span class="iv">{{ s.companyName || '—' }}</span></div>
+        <div class="info-row"><span class="ik">Sàn giao dịch</span><span class="iv">{{ s.exchange || '—' }}</span></div>
+        <div class="info-row"><span class="ik">Ngành</span><span class="iv">{{ s.sector || '—' }}</span></div>
+        <div class="info-row"><span class="ik">Lĩnh vực</span><span class="iv">{{ s.industry || '—' }}</span></div>
+        <div class="info-row"><span class="ik">Ngày giao dịch</span><span class="iv">{{ s.tradingDate }}</span></div>
+        <div class="info-row"><span class="ik">Nguồn dữ liệu</span><span class="iv">{{ s.source || '—' }}</span></div>
+      </div>
+      }
+
+      <!-- Latest tick -->
+      @if (latest(); as lq) {
+      <h3 class="ct" style="margin-top:1.5rem">Realtime Tick</h3>
+      <div class="info-grid">
+        <div class="info-row"><span class="ik">Event ID</span><span class="iv mono">{{ lq.eventId }}</span></div>
+        <div class="info-row"><span class="ik">Giá</span><span class="iv hi">{{ fmt(lq.price) }}</span></div>
+        <div class="info-row"><span class="ik">Khối lượng</span><span class="iv">{{ lq.volume?.toLocaleString('vi-VN') }}</span></div>
+        <div class="info-row"><span class="ik">Thời gian</span><span class="iv">{{ fmtTime(lq.eventTime) }}</span></div>
+        <div class="info-row"><span class="ik">Nguồn</span><span class="iv">{{ lq.source }}</span></div>
+      </div>
+      }
+    </section>
+    }
+
+    <!-- ── Tab: Daily History ── -->
+    @if (tab() === 'daily') {
+    <section class="tab-content">
+      <h3 class="ct">Giá đóng cửa theo ngày</h3>
+      <div #lineChartRef class="chart-box"></div>
+      <h3 class="ct" style="margin-top:1rem">Khối lượng giao dịch</h3>
+      <div #volChartRef class="chart-box"></div>
+
+      <!-- Daily table -->
+      <h3 class="ct" style="margin-top:1.5rem">Lịch sử chi tiết</h3>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead>
+            <tr><th>Ngày</th><th class="r">Mở</th><th class="r">Cao</th><th class="r">Thấp</th><th class="r">Đóng</th><th class="r">KL</th><th class="r">% Ngày</th><th class="r">Biến động</th></tr>
+          </thead>
+          <tbody>
+            @for (d of daily(); track d.tradingDate) {
+            <tr class="trow">
+              <td class="date">{{ d.tradingDate }}</td>
+              <td class="r n">{{ fmt(d.open) }}</td>
+              <td class="r n hi">{{ fmt(d.high) }}</td>
+              <td class="r n lo">{{ fmt(d.low) }}</td>
+              <td class="r n close">{{ fmt(d.close) }}</td>
+              <td class="r n">{{ fmtShort(d.volume) }}</td>
+              <td class="r">
+                <span class="ret" [class.rg]="(d.dailyReturn??0)>0" [class.rr]="(d.dailyReturn??0)<0" [class.rf]="(d.dailyReturn??0)===0">
+                  {{ (d.dailyReturn??0)>0?'+':'' }}{{ fmt(d.dailyReturn) }}%
+                </span>
+              </td>
+              <td class="r n vola">{{ fmt(d.volatility) }}%</td>
+            </tr>
+            } @empty {
+            <tr><td colspan="8" class="empty">Không có dữ liệu lịch sử</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    }
+
+    <!-- ── Tab: Candlestick ── -->
+    @if (tab() === 'ohlc') {
+    <section class="tab-content">
+      <div class="ohlc-header">
+        <h3 class="ct">
+          Candlestick Chart
+          <span class="poll-badge">
+            <span class="pulse-sm"></span>
+            Auto refresh {{ nextRefresh() }}s
+          </span>
+        </h3>
+        <div class="iv-btns">
+          <button class="iv-btn" [class.active]="ohlcInterval()==='1m'"  (click)="setOhlcInterval('1m')">1m</button>
+          <button class="iv-btn" [class.active]="ohlcInterval()==='5m'"  (click)="setOhlcInterval('5m')">5m</button>
+          <button class="iv-btn" [class.active]="ohlcInterval()==='15m'" (click)="setOhlcInterval('15m')">15m</button>
+        </div>
+      </div>
+      <div #candleChartRef class="chart-box chart-tall"></div>
+
+      <!-- OHLC table -->
+      <h3 class="ct" style="margin-top:1.5rem">Dữ liệu OHLC</h3>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead>
+            <tr><th>Từ</th><th>Đến</th><th class="r">Mở</th><th class="r">Cao</th><th class="r">Thấp</th><th class="r">Đóng</th><th class="r">KL</th></tr>
+          </thead>
+          <tbody>
+            @for (o of filteredOhlc(); track o.windowStart) {
+            <tr class="trow">
+              <td class="date">{{ fmtTime(o.windowStart) }}</td>
+              <td class="date">{{ fmtTime(o.windowEnd) }}</td>
+              <td class="r n">{{ fmt(o.open) }}</td>
+              <td class="r n hi">{{ fmt(o.high) }}</td>
+              <td class="r n lo">{{ fmt(o.low) }}</td>
+              <td class="r n close">{{ fmt(o.close) }}</td>
+              <td class="r n">{{ fmtShort(o.volume) }}</td>
+            </tr>
+            } @empty {
+            <tr><td colspan="7" class="empty">Không có dữ liệu OHLC</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    }
+
+    }
+  </main>
+</div>

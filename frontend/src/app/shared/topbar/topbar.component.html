@@ -1,0 +1,30 @@
+<header class="topbar">
+  <div class="topbar-left">
+    <a routerLink="/dashboard" class="brand">
+      <img src="logo.png" alt="h" class="brand-logo" />
+      <span class="brand-name">Stock Intelligence</span>
+    </a>
+    <nav class="nav-links">
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">
+        <span class="material-icons">dashboard</span>
+        <span>Thị trường</span>
+      </a>
+      <a routerLink="/stocks" routerLinkActive="active" class="nav-link">
+        <span class="material-icons">format_list_bulleted</span>
+        <span>Cổ phiếu</span>
+      </a>
+    </nav>
+  </div>
+
+  <div class="topbar-right">
+    @if (currentUser(); as user) {
+    <span class="user-chip">
+      <span class="material-icons">account_circle</span>
+      {{ user.username }}
+    </span>
+    }
+    <button class="logout-btn" (click)="logout()">
+      <span class="material-icons">logout</span>
+    </button>
+  </div>
+</header>

@@ -1,0 +1,109 @@
+<div class="page">
+  <app-topbar />
+
+  <main class="main">
+    <div class="page-header">
+      <h1 class="page-title">
+        <span class="material-icons">format_list_bulleted</span>
+        Danh sách cổ phiếu
+      </h1>
+      <div class="live-bar">
+        <span class="live-badge"><span class="pulse"></span>Live Price</span>
+        <span class="countdown">
+          <span class="material-icons" style="font-size:13px">refresh</span>
+          {{ isRefreshing() ? 'Đang cập nhật...' : nextRefresh() + 's' }}
+        </span>
+      </div>
+    </div>
+
+    @if (loading()) {
+    <div class="center-state"><div class="spinner"></div><p>Đang tải...</p></div>
+    } @else if (error()) {
+    <div class="center-state">
+      <span class="material-icons" style="font-size:3rem;opacity:.3">wifi_off</span>
+      <p>{{ error() }}</p>
+    </div>
+    } @else {
+
+    <!-- Filters -->
+    <div class="filter-bar">
+      <div class="search-wrap">
+        <span class="material-icons si">search</span>
+        <input type="text" class="fi search-fi" placeholder="Tìm mã hoặc tên công ty..." [(ngModel)]="searchQuery" />
+      </div>
+      <select class="fi" [(ngModel)]="selectedExchange">
+        <option value="">Tất cả sàn</option>
+        @for (ex of exchanges(); track ex) { <option [value]="ex">{{ ex }}</option> }
+      </select>
+      <select class="fi" [(ngModel)]="selectedSector">
+        <option value="">Tất cả ngành</option>
+        @for (s of sectors(); track s) { <option [value]="s">{{ s }}</option> }
+      </select>
+      <span class="count">{{ filtered().length }} kết quả</span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <!-- Static info from /api/stocks -->
+            <th class="s" (click)="sort('symbol')">Mã <em>{{ icon('symbol') }}</em></th>
+            <th class="s" (click)="sort('companyName')">Công ty <em>{{ icon('companyName') }}</em></th>
+            <th class="s" (click)="sort('exchange')">Sàn <em>{{ icon('exchange') }}</em></th>
+            <th class="s" (click)="sort('sector')">Ngành <em>{{ icon('sector') }}</em></th>
+            <th class="s" (click)="sort('industry')">Lĩnh vực <em>{{ icon('industry') }}</em></th>
+            <!-- Price data from /api/stocks/latest?symbols=... -->
+            <th class="r">Mở</th>
+            <th class="r">Cao</th>
+            <th class="r">Thấp</th>
+            <th class="r s" (click)="sort('currentPrice')">
+              Đóng / Giá HT <em>{{ icon('currentPrice') }}</em>
+            </th>
+            <th class="r s" (click)="sort('volume')">KL <em>{{ icon('volume') }}</em></th>
+            <th class="r s" (click)="sort('dailyReturn')">% Ngày <em>{{ icon('dailyReturn') }}</em></th>
+            <th class="r s" (click)="sort('volatility')">Biến động <em>{{ icon('volatility') }}</em></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of filtered(); track r.symbol) {
+          <tr class="row" routerLink="/stocks/{{ r.symbol }}">
+            <!-- Static -->
+            <td><span class="sym">{{ r.symbol }}</span></td>
+            <td class="co" [title]="r.companyName">{{ r.companyName || '—' }}</td>
+            <td><span class="ex-tag">{{ r.exchange || '—' }}</span></td>
+            <td class="sec" [title]="r.sector">{{ r.sector || '—' }}</td>
+            <td class="sec" [title]="r.industry">{{ r.industry || '—' }}</td>
+            <!-- EOD OHLC -->
+            <td class="r n">{{ fmt(r.open) }}</td>
+            <td class="r n hi">{{ fmt(r.high) }}</td>
+            <td class="r n lo">{{ fmt(r.low) }}</td>
+            <!-- Live price cell -->
+            <td class="r price-cell">
+              <span class="price-val" [class.live-price]="r.isLive">{{ fmt(r.currentPrice) }}</span>
+              @if (r.isLive) {
+              <span class="live-dot-sm" title="Giá thực: {{ r.liveTime }}"></span>
+              }
+            </td>
+            <!-- Volume -->
+            <td class="r n">{{ fmtVol(r.volume) }}</td>
+            <!-- Daily return -->
+            <td class="r">
+              <span class="ret" [class.rg]="(r.dailyReturn??0)>0" [class.rr]="(r.dailyReturn??0)<0" [class.rf]="(r.dailyReturn??0)===0">
+                {{ (r.dailyReturn??0)>0?'+':'' }}{{ fmt(r.dailyReturn) }}%
+              </span>
+            </td>
+            <td class="r n vola">{{ fmt(r.volatility) }}%</td>
+          </tr>
+          } @empty {
+          <tr><td colspan="12" class="empty">
+            <span class="material-icons">search_off</span>
+            Không tìm thấy cổ phiếu
+          </td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+  </main>
+</div>

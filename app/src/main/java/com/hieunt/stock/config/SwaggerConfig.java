@@ -22,7 +22,7 @@ import java.util.List;
 @Configuration
 public class SwaggerConfig {
 
-    @Value("${server.port:8080}")
+    @Value("${server.port:8081}")
     private String serverPort;
 
     @Bean
@@ -31,9 +31,9 @@ public class SwaggerConfig {
 
         return new OpenAPI()
                 .info(new Info()
-                        .title("Learning English API")
+                        .title("Real-time Stock Intelligence Platform API")
                         .version("1.0.0")
-                        .description("API Documentation for Learning English Application")
+                        .description("API Documentation for Real-time Stock Intelligence Platform")
                         .contact(new Contact()
                                 .name("Hieu NT")
                                 .email("hieunt@example.com"))
